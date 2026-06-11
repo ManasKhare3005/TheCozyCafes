@@ -192,6 +192,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
               </p>
             </div>
             <button
+              type="button"
               onClick={onClearReply}
               className="text-cafe-400 hover:text-red-500 transition-colors p-1 shrink-0"
             >
@@ -237,6 +238,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
               <p className="text-[10px] text-cafe-400 capitalize">{pendingMedia.mediaType}</p>
             </div>
             <button
+              type="button"
               onClick={clearPendingMedia}
               className="text-cafe-400 hover:text-red-500 transition-colors p-1 -mr-1"
             >

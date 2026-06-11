@@ -151,6 +151,7 @@ function VoiceNoteButton({ onSend, disabled }) {
           <span className="text-red-600 text-sm font-medium font-mono">{formatDuration(duration)}</span>
         </div>
         <button
+          type="button"
           onClick={cancelRecording}
           className="p-2 rounded-xl text-cafe-400 hover:text-red-500 hover:bg-red-50 transition-colors"
           title="Cancel"
@@ -160,6 +161,7 @@ function VoiceNoteButton({ onSend, disabled }) {
           </svg>
         </button>
         <button
+          type="button"
           onClick={stopRecording}
           className="p-2 rounded-xl bg-cafe-700 text-white hover:bg-cafe-800 transition-colors shadow-warm"
           title="Send"
@@ -174,6 +176,7 @@ function VoiceNoteButton({ onSend, disabled }) {
 
   return (
     <button
+      type="button"
       onClick={startRecording}
       disabled={disabled}
       className="p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors

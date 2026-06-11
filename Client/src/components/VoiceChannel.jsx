@@ -64,6 +64,7 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
           <>
             {/* Mute toggle */}
             <button
+              type="button"
               onClick={onToggleMute}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                 isMuted
@@ -89,6 +90,7 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
 
             {/* Leave voice */}
             <button
+              type="button"
               onClick={onLeave}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium
                          bg-red-600 text-white hover:bg-red-700 transition-colors ml-auto"
@@ -102,6 +104,7 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
           </>
         ) : (
           <button
+            type="button"
             onClick={onJoin}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium w-full justify-center
                        bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm"
