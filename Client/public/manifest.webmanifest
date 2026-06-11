@@ -1,0 +1,18 @@
+{
+  "name": "The Cozy Cafes",
+  "short_name": "Cozy Cafes",
+  "description": "A calm, small-room chat app — cozy conversations, Empty Chair stranger chats, and an AI Barista companion.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6F0",
+  "theme_color": "#4a3428",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

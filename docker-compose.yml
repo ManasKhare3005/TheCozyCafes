@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chatroom
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chatroom"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./Server
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      CLIENT_URL: http://localhost:5173
+      APP_URL: http://localhost:5173
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chatroom?schema=public
+      REDIS_URL: redis://redis:6379
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0}
+      ENFORCE_HTTPS: ${ENFORCE_HTTPS:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      HTTPS_REDIRECT_ORIGIN: ${HTTPS_REDIRECT_ORIGIN:-}
+      HSTS_MAX_AGE: ${HSTS_MAX_AGE:-31536000}
+      JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret-before-real-use}
+      IP_BAN_HASH_SECRET: ${IP_BAN_HASH_SECRET:-replace-with-a-long-random-secret-before-real-use}
+      JWT_EXPIRES_IN: 7d
+      REQUIRE_EMAIL_VERIFICATION: ${REQUIRE_EMAIL_VERIFICATION:-false}
+      AUTH_DEBUG_TOKENS: ${AUTH_DEBUG_TOKENS:-false}
+      HCAPTCHA_SECRET: ${HCAPTCHA_SECRET:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Chat Room Cafe <noreply@example.com>}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      CLOUDINARY_UPLOAD_MODERATION: ${CLOUDINARY_UPLOAD_MODERATION:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GIPHY_API_KEY: ${GIPHY_API_KEY:-}
+      CONTENT_BANNED_TERMS: ${CONTENT_BANNED_TERMS:-}
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ./Client
+      args:
+        VITE_API_URL: http://localhost:3001/api
+        VITE_SOCKET_URL: http://localhost:3001
+        VITE_HCAPTCHA_SITE_KEY: ${VITE_HCAPTCHA_SITE_KEY:-}
+        VITE_REQUIRE_HCAPTCHA: ${VITE_REQUIRE_HCAPTCHA:-false}
+        VITE_POSTHOG_KEY: ${VITE_POSTHOG_KEY:-}
+        VITE_POSTHOG_HOST: ${VITE_POSTHOG_HOST:-https://app.posthog.com}
+        VITE_KOFI_URL: ${VITE_KOFI_URL:-https://ko-fi.com/thecozycafes}
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:
+  redis_data:

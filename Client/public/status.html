@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Status - The Cozy Cafes</title>
+    <meta name="description" content="Status information for The Cozy Cafes." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/site.css" />
+  </head>
+  <body>
+    <main class="page">
+      <nav class="site-nav page-nav" aria-label="Main">
+        <a class="site-brand" href="/">The Cozy Cafes</a>
+        <div class="site-links">
+          <a href="/launch.html">About</a>
+          <a href="/roadmap.html">Roadmap</a>
+          <a href="/support.html">Support</a>
+          <a href="/">Enter app</a>
+        </div>
+      </nav>
+
+      <header>
+        <p class="eyebrow">Status</p>
+        <h1>Service status.</h1>
+        <p class="section-lede">
+          The app is in pre-launch beta. Before public launch, connect this page to a hosted status provider such as BetterStack or UptimeRobot.
+        </p>
+      </header>
+
+      <section>
+        <h2>Current setup</h2>
+        <ul class="plain-list">
+          <li><strong>Application</strong> Local and staging health should be checked with the server health and readiness endpoints.</li>
+          <li><strong>Database</strong> Readiness checks confirm the API can reach Postgres.</li>
+          <li><strong>Realtime</strong> Readiness checks confirm Redis is available when configured.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Launch requirement</h2>
+        <p>
+          Replace this beta status page with an external incident/status page before sending real users to production.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

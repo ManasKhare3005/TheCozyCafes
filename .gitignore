@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Build output
+dist/
+build/
+coverage/
+Server/coverage/
+backups/
+*.dump
+*.backup
+
+# Prisma
+Server/prisma/*.db
+Server/prisma/*.db-journal
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+.claude/
+
+# Logs
+*.log
+npm-debug.log*

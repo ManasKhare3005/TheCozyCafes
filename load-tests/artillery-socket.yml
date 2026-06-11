@@ -1,0 +1,42 @@
+config:
+  target: "http://localhost:3001"
+  phases:
+    - name: warmup
+      duration: 60
+      arrivalRate: 5
+    - name: ramp-to-1000
+      duration: 300
+      arrivalRate: 20
+      rampTo: 1000
+    - name: hold
+      duration: 300
+      arrivalRate: 1000
+  engines:
+    socketio:
+      transports:
+        - websocket
+  variables:
+    roomId: "{{ $processEnvironment.LOAD_ROOM_ID }}"
+    token: "{{ $processEnvironment.LOAD_AUTH_TOKEN }}"
+scenarios:
+  - name: authenticated chat socket
+    engine: socketio
+    socketio:
+      auth:
+        token: "{{ token }}"
+    flow:
+      - emit:
+          channel: room:join
+          data: "{{ roomId }}"
+      - think: 2
+      - loop:
+          - emit:
+              channel: user:typing
+              data: true
+          - think: 1
+          - emit:
+              channel: message:send
+              data:
+                text: "load test message {{ $randomString() }}"
+          - think: 5
+        count: 5

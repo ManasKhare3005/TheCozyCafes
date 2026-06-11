@@ -1,0 +1,338 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #FAF6F0;
+}
+
+/* Custom scrollbar - cafe style */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: #F5EDE3;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #D4A574;
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #C49A6C;
+}
+
+/* Sidebar scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(212, 165, 116, 0.3);
+  border-radius: 2px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 165, 116, 0.5);
+}
+
+/* Subtle texture overlay for the main bg */
+.cafe-texture {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a574' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Warm input focus glow */
+input:focus, textarea:focus {
+  --tw-ring-color: #D4A574;
+}
+
+/* Modal backdrop blur */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Lobby header with cafe background image */
+.lobby-header {
+  background: url('/cafe-bg.jpg') center center / cover no-repeat;
+  position: relative;
+  min-height: 280px;
+}
+
+.lobby-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to top, #FAF6F0 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* ===== Cafe Loader ===== */
+
+/* Full-size coffee cup */
+.coffee-cup-loader {
+  position: relative;
+  width: 100px;
+  height: 120px;
+}
+
+.cup-body {
+  position: absolute;
+  bottom: 18px;
+  left: 14px;
+  width: 56px;
+  height: 52px;
+  background: linear-gradient(135deg, #8B6F47, #6F4E37);
+  border-radius: 4px 4px 18px 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(111, 78, 55, 0.25);
+}
+
+.coffee-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70%;
+  background: linear-gradient(to top, #3E2723, #5D4037);
+  border-radius: 0 0 16px 16px;
+  animation: coffee-wave 2.2s ease-in-out infinite;
+}
+
+@keyframes coffee-wave {
+  0%, 100% { height: 68%; }
+  50% { height: 74%; }
+}
+
+.cup-shine {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 8px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.cup-handle {
+  position: absolute;
+  right: 4px;
+  bottom: 34px;
+  width: 18px;
+  height: 26px;
+  border: 4px solid #8B6F47;
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+}
+
+.saucer {
+  position: absolute;
+  bottom: 6px;
+  left: 4px;
+  width: 76px;
+  height: 14px;
+  background: linear-gradient(135deg, #D4A574, #C49A6C);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(111, 78, 55, 0.15);
+}
+
+/* Steam wisps */
+.steam-container {
+  position: absolute;
+  top: -10px;
+  left: 22px;
+  width: 40px;
+  height: 40px;
+}
+
+.steam {
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 18px;
+  background: rgba(212, 165, 116, 0.35);
+  border-radius: 50%;
+  filter: blur(3px);
+  animation: steam-rise 2s ease-out infinite;
+}
+
+.steam-1 { left: 6px;  animation-delay: 0s; }
+.steam-2 { left: 16px; animation-delay: 0.5s; }
+.steam-3 { left: 26px; animation-delay: 1s; }
+
+@keyframes steam-rise {
+  0%   { opacity: 0; transform: translateY(0) scaleX(1); }
+  15%  { opacity: 0.6; }
+  50%  { opacity: 0.4; transform: translateY(-18px) scaleX(1.4); }
+  100% { opacity: 0; transform: translateY(-38px) scaleX(2); }
+}
+
+/* Coffee bean dots */
+.bean {
+  display: inline-block;
+  color: #A0845C;
+  font-size: 10px;
+  animation: bean-bounce 1.4s ease-in-out infinite;
+}
+
+.bean-1 { animation-delay: 0s; }
+.bean-2 { animation-delay: 0.2s; }
+.bean-3 { animation-delay: 0.4s; }
+
+@keyframes bean-bounce {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.6); }
+}
+
+/* Small inline loader */
+.coffee-cup-small {
+  position: relative;
+  width: 24px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.cup-body-sm {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  width: 16px;
+  height: 14px;
+  background: linear-gradient(135deg, #8B6F47, #6F4E37);
+  border-radius: 2px 2px 6px 6px;
+}
+
+.steam-container-sm {
+  position: absolute;
+  top: -2px;
+  left: 3px;
+  width: 14px;
+  height: 12px;
+}
+
+.steam-sm {
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 6px;
+  background: rgba(212, 165, 116, 0.4);
+  border-radius: 50%;
+  filter: blur(1.5px);
+  animation: steam-rise-sm 1.8s ease-out infinite;
+}
+
+.steam-sm-1 { left: 1px;  animation-delay: 0s; }
+.steam-sm-2 { left: 5px;  animation-delay: 0.4s; }
+.steam-sm-3 { left: 9px;  animation-delay: 0.8s; }
+
+@keyframes steam-rise-sm {
+  0%   { opacity: 0; transform: translateY(0); }
+  15%  { opacity: 0.5; }
+  100% { opacity: 0; transform: translateY(-10px) scaleX(1.5); }
+}
+
+/* ===== End Cafe Loader ===== */
+
+/* Barista floating button pulse */
+.barista-btn-pulse {
+  animation: barista-glow 3s ease-in-out infinite;
+}
+
+@keyframes barista-glow {
+  0%, 100% { box-shadow: 0 4px 14px rgba(111, 78, 55, 0.3); }
+  50%      { box-shadow: 0 4px 20px rgba(111, 78, 55, 0.55), 0 0 0 6px rgba(111, 78, 55, 0.08); }
+}
+
+/* Dropdown animation */
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-in { animation: dropdown-in 0.15s ease-out; }
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Incoming call gentle bounce */
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ─── Chat micro-animations ─── */
+
+/* Message entrance — new bubbles slide up + fade in, direction matches sender */
+@keyframes msg-in-left {
+  from { opacity: 0; transform: translate(-10px, 8px); }
+  to   { opacity: 1; transform: translate(0, 0); }
+}
+@keyframes msg-in-right {
+  from { opacity: 0; transform: translate(10px, 8px); }
+  to   { opacity: 1; transform: translate(0, 0); }
+}
+.animate-msg-in-left  { animation: msg-in-left 0.18s ease-out; }
+.animate-msg-in-right { animation: msg-in-right 0.18s ease-out; }
+
+/* Reaction pop — chip springs in when added */
+@keyframes reaction-pop {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.animate-reaction-pop { animation: reaction-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Send dart — paper plane shoots up-right, fades, snaps back */
+@keyframes send-dart {
+  0%   { transform: translate(0, 0); opacity: 1; }
+  45%  { transform: translate(10px, -10px); opacity: 0; }
+  46%  { transform: translate(-6px, 6px); opacity: 0; }
+  100% { transform: translate(0, 0); opacity: 1; }
+}
+.animate-send-dart { animation: send-dart 0.35s ease-out; }
+
+/* Card slide — starter card slides across the table with a slight settle */
+@keyframes card-slide-in {
+  from { opacity: 0; transform: translateY(12px) rotate(-1deg); }
+  60%  { opacity: 1; transform: translateY(-2px) rotate(0.3deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0); }
+}
+.animate-card-slide { animation: card-slide-in 0.35s ease-out; }
+
+/* Respect reduced-motion preference — kill decorative animation */
+@media (prefers-reduced-motion: reduce) {
+  .animate-msg-in-left,
+  .animate-msg-in-right,
+  .animate-reaction-pop,
+  .animate-send-dart,
+  .animate-card-slide,
+  .animate-in,
+  .animate-bounce-slow {
+    animation: none;
+  }
+}

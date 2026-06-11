@@ -1,0 +1,678 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username      String   @unique
+  discriminator String   @default("0000") // 4-digit tag e.g. "1234" — shown as username#1234
+  password      String
+  role          String   @default("user") // user, admin
+  emailVerifiedAt DateTime?
+  ageConfirmedAt   DateTime?
+  termsAcceptedAt  DateTime?
+  privacyAcceptedAt DateTime?
+  termsVersion     String?
+  privacyVersion   String?
+  failedLoginAttempts Int      @default(0)
+  lockedUntil         DateTime?
+  lastIpHash          String?
+  onboardingCompletedAt DateTime?
+  referralCode        String?  @unique
+  referredById        String?
+  avatar    String?
+  bio       String?
+  mood      String?  // e.g. "chill", "busy", "caffeinated", "sleepy", "creative", "chatty"
+  status    String?  // Custom text status, e.g. "studying for finals", "brb getting coffee"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages    Message[]
+  rooms       RoomMember[]
+  ownedRooms  Room[]       @relation("RoomOwner")
+  bans        RoomBan[]
+  kickVotesInitiated KickVote[] @relation("VoteInitiator")
+  kickVotesReceived  KickVote[] @relation("VoteTarget")
+  kickVotesCast      KickVoteBallot[]
+  baristaMessages    BaristaMessage[]
+  friendshipsSent     Friendship[]     @relation("FriendshipRequester")
+  friendshipsReceived Friendship[]     @relation("FriendshipAddressee")
+  dmsSent             DirectMessage[]  @relation("DMSender")
+  dmsReceived         DirectMessage[]  @relation("DMReceiver")
+  pollVotes           PollVote[]
+  stickyNotes         StickyNote[]
+  reactions           MessageReaction[]
+  bookmarks           Bookmark[]
+  eventsCreated       RoomEvent[]
+  eventRsvps          EventRsvp[]
+  badges              UserBadge[]
+  musicTracks         MusicTrack[]
+  lostFoundPosts      LostFoundPost[]  @relation("LostFoundAuthor")
+  lostFoundReplies    LostFoundReply[] @relation("LostFoundReplier")
+  bulletinsCreated    CafeBulletin[]   @relation("BulletinAuthor")
+  bulletinStars       CafeBulletinStar[]
+  notifications       Notification[]
+  scheduledMessages   ScheduledMessage[]
+  authTokens          AuthToken[]
+  blocksMade          UserBlock[]         @relation("UserBlocks")
+  blocksReceived      UserBlock[]         @relation("UserBlockedBy")
+  confessionsAuthored Confession[]        @relation("ConfessionAuthor")
+  reportsMade         ModerationReport[]  @relation("ReportReporter")
+  reportsReceived     ModerationReport[]  @relation("ReportTargetUser")
+  reportsReviewed     ModerationReport[]  @relation("ReportReviewer")
+
+  @@index([lastIpHash])
+  @@index([referralCode])
+  @@index([referredById])
+  @@map("users")
+}
+
+model AuthToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  type      String   // "email_verification" or "password_reset"
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, expiresAt])
+  @@map("auth_tokens")
+}
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  reason    String?
+  createdAt DateTime @default(now())
+
+  blockerId String
+  blocker   User   @relation("UserBlocks", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  blockedId String
+  blocked   User   @relation("UserBlockedBy", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId, createdAt])
+  @@index([blockedId])
+  @@map("user_blocks")
+}
+
+model ModerationReport {
+  id             String   @id @default(cuid())
+  targetType     String   // message, user, room, dm, emptychair
+  reason         String
+  details        String?
+  status         String   @default("open") // open, reviewing, resolved, dismissed
+  snapshot       Json?
+  createdAt      DateTime @default(now())
+  reviewedAt     DateTime?
+  resolutionNote String?
+  reporterIpHash String?
+  targetIpHash   String?
+
+  reporterId String
+  reporter   User   @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  targetUserId String?
+  targetUser   User?  @relation("ReportTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  reviewerId String?
+  reviewer   User?  @relation("ReportReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  roomId String?
+
+  @@index([status, createdAt])
+  @@index([reporterId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([messageId])
+  @@index([targetIpHash])
+  @@map("moderation_reports")
+}
+
+model IpBan {
+  id          String   @id @default(cuid())
+  ipHash      String   @unique
+  reason      String?
+  createdById String?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("ip_bans")
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isPrivate   Boolean  @default(false)
+  isAnonymous Boolean  @default(false) // Room-level forced anonymous mode
+  isLocked    Boolean  @default(false) // Moderation lock blocks new joins
+  code        String?  @unique // For private room invites
+  category    String?  // e.g. "general", "gaming", "music", "study", "hangout", "tech", "art", "food"
+  maxMembers  Int      @default(5) // 5 (voice enabled) or 10 (voice disabled)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Cafe hours — room only accessible during scheduled times
+  cafeHoursEnabled Boolean @default(false)
+  cafeHoursStart   String? // "HH:mm" format, e.g. "09:00"
+  cafeHoursEnd     String? // "HH:mm" format, e.g. "17:00"
+  cafeHoursDays    String? // Comma-separated day numbers "0,1,2,3,4,5,6" (0=Sun)
+  cafeHoursTimezone String? // e.g. "Asia/Kolkata"
+
+  ownerId String
+  owner   User   @relation("RoomOwner", fields: [ownerId], references: [id])
+
+  members     RoomMember[]
+  messages    Message[]
+  bans        RoomBan[]
+  kickVotes   KickVote[]
+  polls       Poll[]
+  confessions Confession[]
+  bookmarks   Bookmark[]
+  events      RoomEvent[]
+  musicTracks MusicTrack[]
+  bulletins          CafeBulletin[]
+  scheduledMessages  ScheduledMessage[]
+
+  @@index([ownerId, createdAt])
+  @@index([isPrivate, isLocked, createdAt])
+  @@index([category, createdAt])
+  @@map("rooms")
+}
+
+model RoomMember {
+  id        String   @id @default(cuid())
+  joinedAt  DateTime @default(now())
+  lastReadAt DateTime @default(now()) // Last time user read messages in this room
+  isAnonymous   Boolean @default(false) // Per-user anonymous mode
+  isRevealed    Boolean @default(false) // Force revealed during kick vote
+  anonymousName String? // Persisted anonymous name for anonymous rooms
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@index([roomId, joinedAt])
+  @@index([userId, lastReadAt])
+  @@map("room_members")
+}
+
+model RoomBan {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  reason    String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@index([roomId, createdAt])
+  @@map("room_bans")
+}
+
+model KickVote {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime // 24 hours from creation
+  status    String   @default("active") // active, passed, failed, cancelled
+  reason    String?
+  
+  // The user who started the vote
+  initiatorId String
+  initiator   User   @relation("VoteInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  
+  // The user being voted on
+  targetId String
+  target   User   @relation("VoteTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  
+  // The target's revealed name (if they were anonymous)
+  targetRevealedName String?
+  
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  ballots KickVoteBallot[]
+
+  @@index([roomId, targetId, status])
+  @@map("kick_votes")
+}
+
+model KickVoteBallot {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  vote      Boolean  // true = kick, false = don't kick
+
+  voterId String
+  voter   User   @relation(fields: [voterId], references: [id], onDelete: Cascade)
+
+  kickVoteId String
+  kickVote   KickVote @relation(fields: [kickVoteId], references: [id], onDelete: Cascade)
+
+  @@unique([voterId, kickVoteId]) // One vote per user per kick vote
+  @@map("kick_vote_ballots")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+
+  senderId String?
+  sender   User?   @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  isEphemeral Boolean @default(false)
+  isEdited    Boolean  @default(false)
+  isDeleted   Boolean  @default(false)
+  isPinned    Boolean  @default(false)
+  pinnedAt    DateTime?
+
+  // Media attachment (Cloudinary)
+  mediaUrl  String?
+  mediaType String?  // "image", "video", "audio", "file"
+  mediaName String?  // original filename
+  senderIpHash String?
+
+  // Reply
+  replyToId String?
+  replyTo   Message?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   Message[] @relation("MessageReplies")
+
+  // Thread support
+  parentId    String?
+  parentMsg   Message?  @relation("ThreadMessages", fields: [parentId], references: [id], onDelete: Cascade)
+  threadMsgs  Message[] @relation("ThreadMessages")
+  threadCount Int       @default(0) // cached reply count for display
+
+  reactions MessageReaction[]
+  reports   ModerationReport[]
+
+  @@index([roomId, createdAt])
+  @@index([parentId])
+  @@index([senderId, createdAt])
+  @@index([senderIpHash])
+  @@map("messages")
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  emoji     String   // e.g. "👍", "❤️", "😂"
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId, emoji])
+  @@index([messageId])
+  @@map("message_reactions")
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  status    String   @default("pending") // pending, accepted, declined
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  requesterId String
+  requester   User   @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  addresseeId String
+  addressee   User   @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId, status])
+  @@index([addresseeId, status])
+  @@map("friendships")
+}
+
+model DirectMessage {
+  id             String   @id @default(cuid())
+  text           String
+  conversationId String
+  createdAt      DateTime @default(now())
+  read           Boolean  @default(false)
+
+  senderId   String
+  sender     User   @relation("DMSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  receiverId String
+  receiver   User   @relation("DMReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  // Media attachment (Cloudinary)
+  mediaUrl  String?
+  mediaType String?
+  mediaName String?
+  senderIpHash String?
+
+  // Reply
+  replyToId String?
+  replyTo   DirectMessage?  @relation("DMReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   DirectMessage[] @relation("DMReplies")
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+  @@index([receiverId, read])
+  @@map("direct_messages")
+}
+
+model BaristaMessage {
+  id        String   @id @default(cuid())
+  role      String   // "user" or "assistant"
+  content   String
+  mood      String?  // detected mood: happy, sad, anxious, lonely, neutral, stressed, angry
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("barista_messages")
+}
+
+model Poll {
+  id        String   @id @default(cuid())
+  question  String
+  createdAt DateTime @default(now())
+  expiresAt DateTime? // Optional expiry
+  isActive  Boolean  @default(true)
+
+  creatorId String
+  roomId    String
+  room      Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  options PollOption[]
+
+  @@index([roomId, createdAt])
+  @@map("polls")
+}
+
+model PollOption {
+  id    String @id @default(cuid())
+  text  String
+  order Int    @default(0)
+
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  votes PollVote[]
+
+  @@map("poll_options")
+}
+
+model PollVote {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  optionId String
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, optionId]) // One vote per option per user
+  @@map("poll_votes")
+}
+
+model Confession {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  // Secret author — kept ONLY for moderation/abuse handling (same pattern as
+  // StickyNote). NEVER exposed in API responses. Unlinked if account deleted.
+  authorId String?
+  author   User?   @relation("ConfessionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([roomId, createdAt])
+  @@index([authorId])
+  @@map("confessions")
+}
+
+model StickyNote {
+  id        String   @id @default(cuid())
+  text      String   // Max ~10 words, enforced server-side
+  color     String   @default("yellow") // yellow, pink, green, blue, purple, orange
+  rotation  Float    @default(0) // degrees of tilt (-6 to 6)
+  createdAt DateTime @default(now())
+
+  // Secret author — only used for delete permission + cooldown checks
+  // NOT exposed in API responses (keeps it anonymous)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Tags — comma-separated usernames mentioned in the note
+  tags String? // e.g. "alice,bob"
+
+  // Reported / removed
+  isRemoved Boolean @default(false)
+
+  @@index([createdAt])
+  @@index([authorId])
+  @@map("sticky_notes")
+}
+
+model Bookmark {
+  id          String   @id @default(cuid())
+  url         String
+  title       String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt])
+  @@map("bookmarks")
+}
+
+model RoomEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  scheduledAt DateTime
+  createdAt   DateTime @default(now())
+
+  creatorId String
+  creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  rsvps EventRsvp[]
+
+  @@index([roomId, scheduledAt])
+  @@map("room_events")
+}
+
+model EventRsvp {
+  id        String   @id @default(cuid())
+  status    String   @default("going") // going, maybe, not_going
+  createdAt DateTime @default(now())
+
+  userId  String
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  eventId String
+  event   RoomEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@map("event_rsvps")
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  badgeId   String   // matches a key in the badge definitions
+  awardedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@map("user_badges")
+}
+
+model MusicTrack {
+  id        String   @id @default(cuid())
+  url       String   // YouTube URL
+  title     String
+  thumbnail String?  // YouTube thumbnail URL
+  duration  String?  // e.g. "3:45"
+  status    String   @default("queued") // queued, playing, played, skipped
+  createdAt DateTime @default(now())
+
+  addedById String
+  addedBy   User   @relation(fields: [addedById], references: [id], onDelete: Cascade)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, status])
+  @@map("music_tracks")
+}
+
+// ─── LOST & FOUND ───
+
+model LostFoundPost {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  tag       String   // "question", "looking-for", "recommendation", "help"
+  status    String   @default("open") // "open", "resolved"
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  authorId String
+  author   User   @relation("LostFoundAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  replies LostFoundReply[]
+
+  @@index([status, createdAt])
+  @@index([authorId])
+  @@map("lost_found_posts")
+}
+
+model LostFoundReply {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+
+  authorId String
+  author   User   @relation("LostFoundReplier", fields: [authorId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   LostFoundPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@map("lost_found_replies")
+}
+
+// ─── CAFE BULLETIN ───
+
+model CafeBulletin {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User @relation("BulletinAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  stars CafeBulletinStar[]
+
+  @@index([expiresAt])
+  @@index([roomId])
+  @@map("cafe_bulletins")
+}
+
+model CafeBulletinStar {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bulletinId String
+  bulletin   CafeBulletin @relation(fields: [bulletinId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bulletinId])
+  @@map("cafe_bulletin_stars")
+}
+
+// ─── SCHEDULED MESSAGES ───
+
+model ScheduledMessage {
+  id          String   @id @default(cuid())
+  text        String
+  scheduledAt DateTime
+  status      String   @default("pending") // "pending", "sending", "sent", "cancelled"
+  claimedAt   DateTime? // when a server instance claimed this row for sending
+  createdAt   DateTime @default(now())
+
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledAt])
+  @@index([senderId])
+  @@map("scheduled_messages")
+}
+
+// ─── NOTIFICATIONS ───
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // "friend_request", "friend_accepted", "dm", "kicked", "mention"
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Optional reference data
+  fromUserId String?
+  fromUsername String?
+  roomId     String?
+  roomName   String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+  @@map("notifications")
+}
