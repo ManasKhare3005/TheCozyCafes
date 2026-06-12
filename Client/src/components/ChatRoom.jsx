@@ -348,7 +348,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
   return (
     <div
-      className="flex-1 flex flex-col bg-cafe-50 relative"
+      className="flex-1 min-h-0 h-full flex flex-col overflow-hidden bg-cafe-50 relative"
       onDragEnter={(e) => {
         e.preventDefault();
         dragCounterRef.current++;
@@ -384,7 +384,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       )}
 
       {/* Header */}
-      <header className="bg-white border-b border-cafe-200/50 px-4 lg:px-6 py-3 flex items-center justify-between gap-3 shadow-sm">
+      <header className="shrink-0 bg-white border-b border-cafe-200/50 px-4 lg:px-6 py-3 flex items-center justify-between gap-3 shadow-sm">
         {/* Left: Back button + Room info */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
@@ -509,7 +509,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Ambient status bar */}
       {Object.keys(userAmbience).length > 0 && (
-        <div className="bg-cafe-50/80 border-b border-cafe-200/50 px-4 py-1.5 flex items-center gap-3 overflow-x-auto">
+        <div className="shrink-0 bg-cafe-50/80 border-b border-cafe-200/50 px-4 py-1.5 flex items-center gap-3 overflow-x-auto">
           <span className="text-[10px] text-cafe-400 shrink-0">Vibing:</span>
           {Object.entries(userAmbience).map(([userId, { emoji, name }]) => {
             const u = onlineUsers.find((o) => o.id === userId);
@@ -526,7 +526,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Status banners */}
       {(isAnonymous || isIncognito) && (
-        <div className={`border-b px-4 py-2 text-center ${
+        <div className={`shrink-0 border-b px-4 py-2 text-center ${
           isAnonymous && isIncognito
             ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200'
             : isAnonymous
@@ -552,7 +552,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Pinned messages bar */}
       {pinnedMessages.length > 0 && (
-        <div className="border-b border-cafe-200/50 bg-white">
+        <div className="shrink-0 border-b border-cafe-200/50 bg-white">
           <button
             onClick={() => setShowPins(!showPins)}
             className="w-full flex items-center gap-2 px-4 py-2 text-xs text-cafe-600 hover:bg-cafe-50 transition-colors"
@@ -595,7 +595,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Today's Special - cafe menu icebreaker */}
       {cafeMenu && !menuDismissed && (
-        <div className="bg-gradient-to-r from-amber-50 to-cafe-50 border-b border-amber-200/50 px-4 py-2.5 flex items-center gap-3">
+        <div className="shrink-0 bg-gradient-to-r from-amber-50 to-cafe-50 border-b border-amber-200/50 px-4 py-2.5 flex items-center gap-3">
           <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
             <CafeCupIcon className="w-4 h-4" />
           </span>
@@ -615,7 +615,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 chat-messages">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 chat-messages">
         {isLoadingHistory ? (
           <div className="flex items-center justify-center h-full">
             <CafeLoader size="small" message="Fetching messages..." />
@@ -664,7 +664,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Cafe closed banner */}
       {isCafeClosed && cafeHours && (
-        <div className="bg-amber-50 border-t border-amber-200 px-4 py-3 text-center">
+        <div className="shrink-0 bg-amber-50 border-t border-amber-200 px-4 py-3 text-center">
           <div className="flex items-center justify-center gap-2 text-amber-800">
             <CafeCupIcon className="w-5 h-5 shrink-0" />
             <p className="text-sm font-medium">
@@ -679,7 +679,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Conversation starter card (quiet room) */}
       {starter && !isCafeClosed && (
-        <div className="bg-amber-50 border-t border-amber-200 px-4 py-2.5 flex items-center gap-3 animate-card-slide">
+        <div className="shrink-0 bg-amber-50 border-t border-amber-200 px-4 py-2.5 flex items-center gap-3 animate-card-slide">
           <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
             <CafeCupIcon className="w-4 h-4" />
           </span>
@@ -714,7 +714,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Whisper mode indicator */}
       {whisperTarget && (
-        <div className="bg-purple-50 border-t border-purple-200 px-4 py-2 flex items-center gap-2">
+        <div className="shrink-0 bg-purple-50 border-t border-purple-200 px-4 py-2 flex items-center gap-2">
           <span className="text-purple-600 text-xs font-medium">Whispering to {whisperTarget.username}</span>
           <button
             onClick={() => setWhisperTarget(null)}

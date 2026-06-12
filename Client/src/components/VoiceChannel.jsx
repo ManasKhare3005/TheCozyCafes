@@ -9,7 +9,7 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
   const currentSocketId = socketService.socket?.id;
 
   return (
-    <div className="bg-white border-t border-cafe-200/50">
+    <div className="shrink-0 bg-white border-t border-cafe-200/50">
       {/* Voice users list — always visible when someone is in voice */}
       {voiceUsers.length > 0 && (
         <div className="px-4 pt-3 pb-1">

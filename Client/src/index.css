@@ -15,21 +15,34 @@ body {
 }
 
 /* Custom scrollbar - cafe style */
+.chat-messages {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 94, 60, 0.58) rgba(245, 237, 227, 0.65);
+  scrollbar-gutter: stable;
+}
+
 .chat-messages::-webkit-scrollbar {
-  width: 6px;
+  width: 10px;
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: #F5EDE3;
+  background: linear-gradient(180deg, rgba(245, 237, 227, 0.38), rgba(250, 246, 240, 0.8));
+  border-left: 1px solid rgba(212, 165, 116, 0.18);
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #D4A574;
-  border-radius: 3px;
+  background: linear-gradient(180deg, #D4A574 0%, #8B5E3C 100%);
+  border: 2px solid #FAF6F0;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #C49A6C;
+  background: linear-gradient(180deg, #C49A6C 0%, #6F4E37 100%);
+}
+
+.chat-messages::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Sidebar scrollbar */

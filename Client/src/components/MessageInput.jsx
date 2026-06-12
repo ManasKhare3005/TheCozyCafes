@@ -159,7 +159,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
 
   return (
     <div
-      className="bg-white border-t border-cafe-200/50 relative"
+      className="shrink-0 bg-white border-t border-cafe-200/50 relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}

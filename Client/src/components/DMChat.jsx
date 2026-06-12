@@ -102,9 +102,9 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-cafe-50">
+    <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden bg-cafe-50">
       {/* Header */}
-      <header className="bg-white border-b border-cafe-200/50 px-6 py-4 flex items-center justify-between shadow-sm">
+      <header className="shrink-0 bg-white border-b border-cafe-200/50 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
           <button
             onClick={onBack}
@@ -206,7 +206,7 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
       <audio ref={remoteAudioRef} autoPlay />
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 chat-messages">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 chat-messages">
         {isLoadingHistory ? (
           <div className="flex items-center justify-center h-full">
             <CafeLoader size="small" message="Loading messages..." />
