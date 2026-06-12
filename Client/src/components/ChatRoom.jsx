@@ -27,22 +27,41 @@ import { isSoundOn, setSoundOn } from '../lib/sounds';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-// Shown by the Barista when a room goes quiet â€” something to restart the talk
+// Shown by the Barista when a room goes quiet - something to restart the talk
 const CONVERSATION_STARTERS = [
-  "What's everyone drinking right now? â˜•",
+  "What's everyone drinking right now?",
   "Quick poll: best time of day, morning or late night?",
   "What's the last song you had on repeat?",
   "If this table had a snack menu, what should be on it?",
-  "One word for how your week is going â€” go.",
+  "One word for how your week is going - go.",
   "Anyone watched/read something good lately?",
   "Hot take: pineapple on pizza. Discuss.",
   "What's a small thing that made today better?",
   "If you could instantly master one skill, what would it be?",
-  "Show of hands â€” who's procrastinating on something right now? ðŸ™‹",
+  "Show of hands - who's procrastinating on something right now?",
   "What's your most controversial food opinion?",
   "Describe your current mood as a weather forecast.",
 ];
 const QUIET_THRESHOLD_MS = 10 * 60 * 1000;
+
+function CafeCupIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h11v6a4 4 0 01-4 4H9a4 4 0 01-4-4V8z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 10h1.5a2.5 2.5 0 010 5H16" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v1m4-1v1m4-1v1M4 20h14" />
+    </svg>
+  );
+}
+
+function BellIcon({ muted = false, className = 'w-4 h-4' }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17H9m6 0a3 3 0 01-6 0m6 0h3.5a1 1 0 00.8-1.6L18 13.7V10a6 6 0 10-12 0v3.7l-1.3 1.7a1 1 0 00.8 1.6H9" />
+      {muted && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4l16 16" />}
+    </svg>
+  );
+}
 
 function SoundToggle() {
   const [on, setOn] = useState(isSoundOn);
@@ -53,12 +72,13 @@ function SoundToggle() {
   return (
     <button
       onClick={toggle}
-      className={`flex items-center px-2.5 py-1.5 rounded-xl text-sm transition-colors ${
+      className={`flex items-center justify-center w-9 h-9 rounded-xl text-sm transition-colors ${
         on ? 'bg-cafe-100 text-cafe-700 hover:bg-cafe-200' : 'bg-cafe-50 text-cafe-300 hover:bg-cafe-100'
       }`}
       title={on ? 'Mute cafe sounds (message clinks, door chime)' : 'Unmute cafe sounds'}
+      aria-label={on ? 'Mute cafe sounds' : 'Unmute cafe sounds'}
     >
-      {on ? 'ðŸ””' : 'ðŸ”•'}
+      <BellIcon muted={!on} />
     </button>
   );
 }
@@ -293,7 +313,9 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       <div className="flex-1 flex flex-col bg-cafe-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-cafe-400">
-            <span className="text-6xl block mb-4">â˜•</span>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-cafe-100 text-cafe-400 flex items-center justify-center">
+              <CafeCupIcon className="w-8 h-8" />
+            </div>
             <p className="text-xl font-serif text-cafe-500">Pull up a chair</p>
             <p className="text-sm mt-1 text-cafe-400">Pick a table from the lobby</p>
           </div>
@@ -522,7 +544,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
             )}
             {isAnonymous && isIncognito && <span className="text-cafe-300 mx-2">+</span>}
             {isIncognito && (
-              <span className="text-amber-700">Incognito â€” messages won't be saved</span>
+              <span className="text-amber-700">Incognito - messages won't be saved</span>
             )}
           </p>
         </div>
@@ -571,10 +593,12 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
         </div>
       )}
 
-      {/* Today's Special â€” cafe menu icebreaker */}
+      {/* Today's Special - cafe menu icebreaker */}
       {cafeMenu && !menuDismissed && (
         <div className="bg-gradient-to-r from-amber-50 to-cafe-50 border-b border-amber-200/50 px-4 py-2.5 flex items-center gap-3">
-          <span className="text-lg shrink-0">â˜•</span>
+          <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+            <CafeCupIcon className="w-4 h-4" />
+          </span>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Today's Special</p>
             <p className="text-sm text-cafe-800 font-serif">{cafeMenu}</p>
@@ -642,7 +666,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       {isCafeClosed && cafeHours && (
         <div className="bg-amber-50 border-t border-amber-200 px-4 py-3 text-center">
           <div className="flex items-center justify-center gap-2 text-amber-800">
-            <span className="text-lg">â˜•</span>
+            <CafeCupIcon className="w-5 h-5 shrink-0" />
             <p className="text-sm font-medium">
               This table is closed for the day. Come back between{' '}
               <span className="font-semibold">{cafeHours.start}</span> and{' '}
@@ -656,7 +680,9 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       {/* Conversation starter card (quiet room) */}
       {starter && !isCafeClosed && (
         <div className="bg-amber-50 border-t border-amber-200 px-4 py-2.5 flex items-center gap-3 animate-card-slide">
-          <span className="text-lg shrink-0">â˜•</span>
+          <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+            <CafeCupIcon className="w-4 h-4" />
+          </span>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wide text-amber-600">The Barista slides a card onto the table</p>
             <p className="text-sm text-cafe-800 truncate">{starter}</p>
