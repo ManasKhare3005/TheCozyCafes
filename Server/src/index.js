@@ -31,6 +31,7 @@ import notificationRoutes from './routes/notification.routes.js';
 import scheduledRoutes from './routes/scheduled.routes.js';
 import linkpreviewRoutes from './routes/linkpreview.routes.js';
 import moderationRoutes from './routes/moderation.routes.js';
+import drawingRoutes from './routes/drawing.routes.js';
 import { setupSocketHandlers, getRoomUsers } from './socket/handlers.js';
 import { processExpiredVotes, setSocketInstance } from './controllers/kick.controller.js';
 import { setSocketInstance as setMusicSocketInstance } from './controllers/music.controller.js';
@@ -220,6 +221,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/scheduled', scheduledRoutes);
 app.use('/api/link-preview', linkpreviewRoutes);
 app.use('/api/moderation', moderationRoutes);
+app.use('/api', drawingRoutes);
 app.use(requestErrorMiddleware);
 
 // Setup socket handlers

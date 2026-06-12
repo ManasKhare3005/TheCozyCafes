@@ -24,6 +24,7 @@ function formatResults(data) {
     id: item.id,
     title: item.title || '',
     preview: item.images?.fixed_height_small?.url || item.images?.fixed_height?.url,
+    mp4: item.images?.fixed_height?.mp4 || item.images?.downsized_small?.mp4 || '',
     url: item.images?.fixed_height?.url,
     width: parseInt(item.images?.fixed_height?.width) || 200,
     height: parseInt(item.images?.fixed_height?.height) || 200,

@@ -146,7 +146,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
   const handleGifSelect = (gif) => {
     setShowGifPicker(false);
     // Send GIF as a media message immediately
-    onSend('', { url: gif.url, mediaType: 'image', mediaName: 'GIF' }, replyTo || null);
+    onSend('', { url: gif.mp4 || gif.url, mediaType: gif.mp4 ? 'gif' : 'image', mediaName: 'GIF' }, replyTo || null);
     onClearReply?.();
   };
 

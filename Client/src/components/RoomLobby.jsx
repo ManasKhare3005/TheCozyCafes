@@ -523,33 +523,14 @@ function RoomLobby({
           )}
         </div>
 
-        {/* Daily ritual question + tip jar */}
-        <div className="bg-gradient-to-r from-amber-50 to-cafe-50 rounded-2xl border border-amber-200/50 shadow-warm px-4 py-3 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        {/* Daily ritual question */}
+        <div className="bg-gradient-to-r from-amber-50 to-cafe-50 rounded-2xl border border-amber-200/50 shadow-warm px-4 py-3 mb-6 flex items-start gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             <span className="text-2xl shrink-0">📋</span>
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wide text-amber-600">Today's question</p>
               <p className="text-sm text-cafe-800 font-medium leading-snug">{getDailyQuestion()}</p>
             </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => { track('daily_question_answer_clicked'); onOpenBoard(); }}
-              className="text-xs px-3.5 py-2 rounded-xl bg-amber-600 text-white font-medium hover:bg-amber-700 transition-colors shadow-sm"
-            >
-              Answer on the Board 📌
-            </button>
-            <a
-              href={DONATION_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => track('donation_clicked', { source: 'lobby_tip_jar', platform: 'ko-fi' })}
-              title="Donations keep the lights on and the coffee warm"
-              className="text-xs px-3.5 py-2 rounded-xl bg-white text-cafe-600 font-medium border border-cafe-200
-                         hover:bg-cafe-50 hover:border-amber-300 transition-colors shadow-sm"
-            >
-              🫙 Tip jar
-            </a>
           </div>
         </div>
 

@@ -47,6 +47,7 @@ model User {
   dmsReceived         DirectMessage[]  @relation("DMReceiver")
   pollVotes           PollVote[]
   stickyNotes         StickyNote[]
+  drawingGalleryItems DrawingGalleryItem[]
   reactions           MessageReaction[]
   bookmarks           Bookmark[]
   eventsCreated       RoomEvent[]
@@ -187,6 +188,8 @@ model Room {
   musicTracks MusicTrack[]
   bulletins          CafeBulletin[]
   scheduledMessages  ScheduledMessage[]
+  drawingState       DrawingState?
+  drawingGallery     DrawingGalleryItem[]
 
   @@index([ownerId, createdAt])
   @@index([isPrivate, isLocked, createdAt])
@@ -477,6 +480,35 @@ model StickyNote {
   @@index([createdAt])
   @@index([authorId])
   @@map("sticky_notes")
+}
+
+model DrawingState {
+  id        String   @id @default(cuid())
+  strokes   Json
+  updatedAt DateTime @updatedAt
+
+  roomId String @unique
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("drawing_states")
+}
+
+model DrawingGalleryItem {
+  id        String   @id @default(cuid())
+  title     String?
+  imageData String
+  strokes   Json
+  createdAt DateTime @default(now())
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt])
+  @@index([authorId])
+  @@map("drawing_gallery_items")
 }
 
 model Bookmark {

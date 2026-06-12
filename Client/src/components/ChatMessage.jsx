@@ -1,11 +1,91 @@
 import React, { useState, useRef, useEffect } from 'react';
 import LinkPreview from './LinkPreview';
 
+function ControlledGif({ src, title, expanded }) {
+  const videoRef = useRef(null);
+  const loopCountRef = useRef(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  const playTwice = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    loopCountRef.current = 0;
+    setIsPlaying(true);
+    video.currentTime = 0;
+    video.play().catch(() => {
+      setIsPlaying(false);
+    });
+  };
+
+  const handleEnded = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    loopCountRef.current += 1;
+    if (loopCountRef.current < 2) {
+      video.currentTime = 0;
+      video.play().catch(() => setIsPlaying(false));
+      return;
+    }
+
+    setIsPlaying(false);
+  };
+
+  useEffect(() => {
+    playTwice();
+  }, [src]);
+
+  return (
+    <div
+      className="relative inline-block max-w-full"
+      onMouseEnter={() => {
+        if (!isPlaying) playTwice();
+      }}
+      onFocus={() => {
+        if (!isPlaying) playTwice();
+      }}
+    >
+      <video
+        ref={videoRef}
+        src={src}
+        muted
+        playsInline
+        autoPlay
+        preload="metadata"
+        onEnded={handleEnded}
+        aria-label={title || 'GIF'}
+        className="rounded-xl max-w-full cursor-pointer"
+        style={{ maxHeight: expanded ? 'none' : '300px', objectFit: 'cover' }}
+      />
+      {!isPlaying && (
+        <div className="absolute inset-x-2 bottom-2 flex justify-end pointer-events-none">
+          <span className="rounded-full bg-cafe-900/70 px-2 py-0.5 text-[10px] font-medium text-white">
+            Hover to replay
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MediaContent({ message, isOwnMessage }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   if (!message.mediaUrl) return null;
+
+  if (message.mediaType === 'gif') {
+    return (
+      <div className="mt-1.5 mb-1" onClick={() => setExpanded(!expanded)}>
+        <ControlledGif
+          src={message.mediaUrl}
+          title={message.mediaName || 'GIF'}
+          expanded={expanded}
+        />
+      </div>
+    );
+  }
 
   if (message.mediaType === 'image') {
     return (
@@ -131,9 +211,56 @@ function ReactionBar({ reactions, currentUserId, onToggle, messageId }) {
   );
 }
 
-function EmojiPicker({ onSelect }) {
+function EmojiPicker({ onSelect, anchorRef, align = 'left' }) {
+  const pickerElRef = useRef(null);
+  const [position, setPosition] = useState(null);
+
+  useEffect(() => {
+    const updatePosition = () => {
+      const anchor = anchorRef?.current;
+      if (!anchor) return;
+
+      const margin = 8;
+      const rect = anchor.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const width = Math.min(288, viewportWidth - margin * 2);
+      const pickerHeight = pickerElRef.current?.offsetHeight || 48;
+      const preferredLeft = align === 'right' ? rect.right - width : rect.left;
+      const left = Math.min(
+        Math.max(preferredLeft, margin),
+        Math.max(margin, viewportWidth - width - margin)
+      );
+      const topAbove = rect.top - pickerHeight - 6;
+      const topBelow = rect.bottom + 6;
+      const top = topAbove >= margin
+        ? topAbove
+        : Math.min(topBelow, Math.max(margin, viewportHeight - pickerHeight - margin));
+
+      setPosition({ left, top, width });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [anchorRef, align]);
+
   return (
-    <div className="absolute bottom-full mb-1 bg-white rounded-xl shadow-warm-lg border border-cafe-200/50 p-1.5 flex gap-0.5 z-50">
+    <div
+      ref={pickerElRef}
+      className={`fixed bg-white rounded-xl shadow-warm-lg border border-cafe-200/50 p-1.5 flex flex-wrap justify-center gap-0.5 z-50 ${
+        position ? 'opacity-100' : 'opacity-0'
+      }`}
+      style={{
+        left: position?.left ?? 0,
+        top: position?.top ?? 0,
+        width: position?.width ?? 288,
+      }}
+    >
       {QUICK_EMOJIS.map((emoji) => (
         <button
           key={emoji}
@@ -357,7 +484,11 @@ function ChatMessage({ message, isOwnMessage, currentUserId, isAdmin, isPinned, 
               </svg>
             </button>
             {showEmojiPicker && (
-              <EmojiPicker onSelect={(emoji) => { onToggleReaction(message.id, emoji); setShowEmojiPicker(false); }} />
+              <EmojiPicker
+                anchorRef={pickerRef}
+                align="left"
+                onSelect={(emoji) => { onToggleReaction(message.id, emoji); setShowEmojiPicker(false); }}
+              />
             )}
           </div>
         </div>
@@ -509,7 +640,11 @@ function ChatMessage({ message, isOwnMessage, currentUserId, isAdmin, isPinned, 
               </svg>
             </button>
             {showEmojiPicker && (
-              <EmojiPicker onSelect={(emoji) => { onToggleReaction(message.id, emoji); setShowEmojiPicker(false); }} />
+              <EmojiPicker
+                anchorRef={pickerRef}
+                align="right"
+                onSelect={(emoji) => { onToggleReaction(message.id, emoji); setShowEmojiPicker(false); }}
+              />
             )}
           </div>
           {onThread && (

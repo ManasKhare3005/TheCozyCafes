@@ -17,6 +17,8 @@ import BadgeShowcase from './BadgeShowcase';
 import ThreadPanel from './ThreadPanel';
 import MusicQueue from './MusicQueue';
 import DrawingBoard from './DrawingBoard';
+import DrawingGallery from './DrawingGallery';
+import PictionaryGame from './PictionaryGame';
 import CafeLoader from './CafeLoader';
 import CafeBulletinCreate from './CafeBulletinCreate';
 import MessageSearch from './MessageSearch';
@@ -25,18 +27,18 @@ import { isSoundOn, setSoundOn } from '../lib/sounds';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-// Shown by the Barista when a room goes quiet — something to restart the talk
+// Shown by the Barista when a room goes quiet â€” something to restart the talk
 const CONVERSATION_STARTERS = [
-  "What's everyone drinking right now? ☕",
+  "What's everyone drinking right now? â˜•",
   "Quick poll: best time of day, morning or late night?",
   "What's the last song you had on repeat?",
   "If this table had a snack menu, what should be on it?",
-  "One word for how your week is going — go.",
+  "One word for how your week is going â€” go.",
   "Anyone watched/read something good lately?",
   "Hot take: pineapple on pizza. Discuss.",
   "What's a small thing that made today better?",
   "If you could instantly master one skill, what would it be?",
-  "Show of hands — who's procrastinating on something right now? 🙋",
+  "Show of hands â€” who's procrastinating on something right now? ðŸ™‹",
   "What's your most controversial food opinion?",
   "Describe your current mood as a weather forecast.",
 ];
@@ -56,8 +58,83 @@ function SoundToggle() {
       }`}
       title={on ? 'Mute cafe sounds (message clinks, door chime)' : 'Unmute cafe sounds'}
     >
-      {on ? '🔔' : '🔕'}
+      {on ? 'ðŸ””' : 'ðŸ”•'}
     </button>
+  );
+}
+
+function HeaderMenu({ label, title, items, accent = 'bg-cafe-400', className = '' }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+  const menuId = `${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-room-menu`;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handlePointerDown = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
+  const visibleItems = items.filter((item) => !item.hidden);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setOpen((value) => !value)}
+        className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-gradient-to-b from-white to-cafe-50 text-cafe-700 hover:text-cafe-900 border border-cafe-200/70 shadow-sm hover:shadow-warm transition-all ${className}`}
+        title={title || label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${accent} shadow-sm`} />
+        <span className="text-sm font-medium">{label}</span>
+        <svg className={`w-3.5 h-3.5 text-cafe-400 group-hover:text-cafe-600 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && visibleItems.length > 0 && (
+        <div
+          id={menuId}
+          role="menu"
+          className="absolute right-0 mt-2 w-64 rounded-2xl border border-cafe-200/80 bg-white shadow-warm-lg z-40 overflow-hidden p-1.5"
+        >
+          {visibleItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                item.onClick();
+              }}
+              className="group/item w-full flex items-start gap-3 text-left px-3 py-2.5 rounded-xl text-sm text-cafe-700 hover:bg-cafe-50 transition-colors"
+            >
+              <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${item.accent || accent}`} />
+              <span className="flex-1 min-w-0">
+                <span className="block font-medium text-cafe-800 group-hover/item:text-cafe-950">{item.label}</span>
+                {item.description && (
+                  <span className="block text-[11px] leading-snug text-cafe-400 mt-0.5">{item.description}</span>
+                )}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -128,6 +205,8 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
   const [activeThread, setActiveThread] = useState(null);
   const [showMusic, setShowMusic] = useState(false);
   const [showDrawing, setShowDrawing] = useState(false);
+  const [showDrawingGallery, setShowDrawingGallery] = useState(false);
+  const [showPictionary, setShowPictionary] = useState(false);
   const [showPolls, setShowPolls] = useState(false);
   const [showBulletinCreate, setShowBulletinCreate] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -214,7 +293,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       <div className="flex-1 flex flex-col bg-cafe-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-cafe-400">
-            <span className="text-6xl block mb-4">☕</span>
+            <span className="text-6xl block mb-4">â˜•</span>
             <p className="text-xl font-serif text-cafe-500">Pull up a chair</p>
             <p className="text-sm mt-1 text-cafe-400">Pick a table from the lobby</p>
           </div>
@@ -222,6 +301,28 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       </div>
     );
   }
+
+  const isRoomOwner = room.ownerId === user.id;
+  const boardMenuItems = [
+    { label: 'Confession Board', description: 'Anonymous notes for the table', onClick: () => setShowConfessions(true), accent: 'bg-amber-400' },
+    { label: 'Bookmarks', description: 'Shared links and references', onClick: () => setShowBookmarks(true), accent: 'bg-cafe-400' },
+    { label: 'Drawing Board', description: 'Collaborative napkin sketching', onClick: () => setShowDrawing(true), accent: 'bg-pink-400' },
+    { label: 'Drawing Gallery', description: 'Saved room drawings', onClick: () => setShowDrawingGallery(true), accent: 'bg-pink-500' },
+  ];
+  const activityMenuItems = [
+    { label: 'Events', description: 'Plan hangouts and room moments', onClick: () => setShowEvents(true), accent: 'bg-blue-400' },
+    { label: 'Polls', description: 'Ask quick questions', onClick: () => setShowPolls(true), accent: 'bg-sky-400' },
+    { label: 'Jukebox', description: 'Queue music together', onClick: () => setShowMusic(true), accent: 'bg-purple-400' },
+    { label: 'Badges', description: 'See achievements', onClick: () => setShowBadges(true), accent: 'bg-amber-400' },
+  ];
+  const gameMenuItems = [
+    { label: 'Pictionary', description: 'Draw, guess, and race the timer', onClick: () => setShowPictionary(true), accent: 'bg-emerald-400' },
+  ];
+  const manageMenuItems = [
+    { label: 'Scheduled Messages', description: 'Review pending sends', onClick: () => setShowScheduled(true), accent: 'bg-cafe-400' },
+    { label: 'Members', description: 'Moderate this table', onClick: () => setShowKickPanel(true), accent: 'bg-amber-500' },
+    { label: 'Post Bulletin', description: 'Publish a lobby announcement', onClick: () => setShowBulletinCreate(true), hidden: !isRoomOwner, accent: 'bg-sky-400' },
+  ];
 
   return (
     <div
@@ -261,9 +362,9 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       )}
 
       {/* Header */}
-      <header className="bg-white border-b border-cafe-200/50 px-6 py-4 flex items-center justify-between shadow-sm">
+      <header className="bg-white border-b border-cafe-200/50 px-4 lg:px-6 py-3 flex items-center justify-between gap-3 shadow-sm">
         {/* Left: Back button + Room info */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             onClick={onBack}
             className="p-2 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors -ml-2"
@@ -275,7 +376,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
           </button>
         <button
           onClick={onShowRoomInfo}
-          className="flex items-center gap-3 hover:bg-cafe-50 rounded-xl px-2 py-1 transition-colors"
+          className="flex items-center gap-3 hover:bg-cafe-50 rounded-xl px-2 py-1 transition-colors min-w-0"
         >
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-serif font-bold text-sm shadow-sm
             ${room.isPrivate
@@ -288,9 +389,9 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
               </svg>
             ) : room.name.charAt(0).toUpperCase()}
           </div>
-          <div className="text-left">
-            <h1 className="text-lg font-serif font-bold text-cafe-900 flex items-center gap-2">
-              {room.name}
+          <div className="text-left min-w-0">
+            <h1 className="text-lg font-serif font-bold text-cafe-900 flex items-center gap-2 min-w-0">
+              <span className="truncate max-w-[15rem] lg:max-w-[22rem]">{room.name}</span>
               {isAnonymousRoom && <span className="text-amber-600 text-sm font-sans font-normal">anonymous room</span>}
               {isAnonymous && !isAnonymousRoom && <span className="text-amber-600 text-sm font-sans font-normal">incognito</span>}
               <svg className="w-4 h-4 text-cafe-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,7 +416,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
         </div>
 
         {/* Right: Controls */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 min-w-0">
           {/* Search messages */}
           <button
             onClick={() => setShowSearch(true)}
@@ -328,117 +429,17 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
             <span className="hidden sm:inline">Search</span>
           </button>
 
-          {/* Scheduled messages */}
-          <button
-            onClick={() => setShowScheduled(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-cafe-50 text-cafe-600 hover:bg-cafe-100 transition-colors"
-            title="Scheduled Messages"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-
           {/* Ambience toggle */}
           <AmbienceToggle />
 
           {/* UI sound toggle (clinks + door chime) */}
           <SoundToggle />
 
-          {/* Confession board button */}
-          <button
-            onClick={() => setShowConfessions(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
-            title="Confession Board"
-          >
-            <span className="text-sm">🤫</span>
-            <span className="hidden sm:inline">Confess</span>
-          </button>
+          <HeaderMenu label="Boards" title="Boards and shared room spaces" items={boardMenuItems} accent="bg-pink-400" />
+          <HeaderMenu label="Activities" title="Room activities" items={activityMenuItems} accent="bg-blue-400" />
+          <HeaderMenu label="Games" title="Games" items={gameMenuItems} accent="bg-emerald-400" />
+          <HeaderMenu label="Manage" title="Room management" items={manageMenuItems} accent="bg-amber-500" />
 
-          {/* Bookmarks button */}
-          <button
-            onClick={() => setShowBookmarks(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-cafe-50 text-cafe-600 hover:bg-cafe-100 transition-colors"
-            title="Bookmarks"
-          >
-            <span className="text-sm">🔖</span>
-            <span className="hidden sm:inline">Bookmarks</span>
-          </button>
-
-          {/* Events button */}
-          <button
-            onClick={() => setShowEvents(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-cafe-50 text-cafe-600 hover:bg-cafe-100 transition-colors"
-            title="Room Events"
-          >
-            <span className="text-sm">📅</span>
-            <span className="hidden sm:inline">Events</span>
-          </button>
-
-          {/* Polls button */}
-          <button
-            onClick={() => setShowPolls(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-            title="Polls"
-          >
-            <span className="text-sm">📊</span>
-            <span className="hidden sm:inline">Polls</span>
-          </button>
-
-          {/* Drawing board button */}
-          <button
-            onClick={() => setShowDrawing(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors"
-            title="Drawing Board"
-          >
-            <span className="text-sm">🎨</span>
-            <span className="hidden sm:inline">Draw</span>
-          </button>
-
-          {/* Jukebox button */}
-          <button
-            onClick={() => setShowMusic(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
-            title="Jukebox"
-          >
-            <span className="text-sm">🎵</span>
-            <span className="hidden sm:inline">Jukebox</span>
-          </button>
-
-          {/* Badges button */}
-          <button
-            onClick={() => setShowBadges(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
-            title="Achievements"
-          >
-            <span className="text-sm">🏆</span>
-            <span className="hidden sm:inline">Badges</span>
-          </button>
-
-          {/* Bulletin button (room owner only) */}
-          {room.ownerId === user.id && (
-            <button
-              onClick={() => setShowBulletinCreate(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors"
-              title="Post a bulletin to the lobby"
-            >
-              <span className="text-sm">📢</span>
-              <span className="hidden sm:inline">Bulletin</span>
-            </button>
-          )}
-
-          {/* Members/Kick button */}
-          <button
-            onClick={() => setShowKickPanel(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-cafe-100 text-cafe-600 hover:bg-cafe-200 transition-colors"
-            title="Manage members"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <span className="hidden sm:inline">Members</span>
-          </button>
 
           {/* Incognito toggle */}
           <button
@@ -494,7 +495,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
               <span key={userId} className="flex items-center gap-1 text-xs text-cafe-600 shrink-0">
                 <span>{emoji}</span>
                 <span className="font-medium">{u?.username || 'Someone'}</span>
-                <span className="text-cafe-400">· {name}</span>
+                <span className="text-cafe-400">Â· {name}</span>
               </span>
             );
           })}
@@ -521,7 +522,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
             )}
             {isAnonymous && isIncognito && <span className="text-cafe-300 mx-2">+</span>}
             {isIncognito && (
-              <span className="text-amber-700">Incognito — messages won't be saved</span>
+              <span className="text-amber-700">Incognito â€” messages won't be saved</span>
             )}
           </p>
         </div>
@@ -570,10 +571,10 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
         </div>
       )}
 
-      {/* Today's Special — cafe menu icebreaker */}
+      {/* Today's Special â€” cafe menu icebreaker */}
       {cafeMenu && !menuDismissed && (
         <div className="bg-gradient-to-r from-amber-50 to-cafe-50 border-b border-amber-200/50 px-4 py-2.5 flex items-center gap-3">
-          <span className="text-lg shrink-0">☕</span>
+          <span className="text-lg shrink-0">â˜•</span>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Today's Special</p>
             <p className="text-sm text-cafe-800 font-serif">{cafeMenu}</p>
@@ -641,7 +642,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       {isCafeClosed && cafeHours && (
         <div className="bg-amber-50 border-t border-amber-200 px-4 py-3 text-center">
           <div className="flex items-center justify-center gap-2 text-amber-800">
-            <span className="text-lg">☕</span>
+            <span className="text-lg">â˜•</span>
             <p className="text-sm font-medium">
               This table is closed for the day. Come back between{' '}
               <span className="font-semibold">{cafeHours.start}</span> and{' '}
@@ -655,7 +656,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       {/* Conversation starter card (quiet room) */}
       {starter && !isCafeClosed && (
         <div className="bg-amber-50 border-t border-amber-200 px-4 py-2.5 flex items-center gap-3 animate-card-slide">
-          <span className="text-lg shrink-0">☕</span>
+          <span className="text-lg shrink-0">â˜•</span>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wide text-amber-600">The Barista slides a card onto the table</p>
             <p className="text-sm text-cafe-800 truncate">{starter}</p>
@@ -782,6 +783,26 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
         <DrawingBoard
           roomId={room.id}
           onClose={() => setShowDrawing(false)}
+        />
+      )}
+
+      {/* Drawing Gallery */}
+      {showDrawingGallery && (
+        <DrawingGallery
+          roomId={room.id}
+          onClose={() => setShowDrawingGallery(false)}
+          onOpenBoard={() => {
+            setShowDrawingGallery(false);
+            setShowDrawing(true);
+          }}
+        />
+      )}
+
+      {/* Pictionary Game */}
+      {showPictionary && (
+        <PictionaryGame
+          roomId={room.id}
+          onClose={() => setShowPictionary(false)}
         />
       )}
 

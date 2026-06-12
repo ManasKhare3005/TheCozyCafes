@@ -5,6 +5,13 @@ import { createNotification } from '../controllers/notification.controller.js';
 import { isBlockedBetween } from '../lib/blocks.js';
 import { checkSocketSpam, evaluateTextSafety } from '../lib/contentSafety.js';
 import { socketIpBanMiddleware } from '../lib/ipBan.js';
+import {
+  DRAW_BACKGROUND,
+  MAX_DRAWING_STROKES,
+  isValidDrawLine,
+  normalizeDrawStroke,
+  normalizeDrawStrokes,
+} from '../lib/drawing.js';
 
 // Track connected users per room
 const roomUsers = new Map(); // roomId -> Map(socketId -> user)
@@ -29,11 +36,7 @@ const RATE_LIMITS = {
 
 const VALID_MOODS = new Set(['chill', 'busy', 'caffeinated', 'sleepy', 'creative', 'chatty', 'focused', 'vibing']);
 const STATUS_MAX_LENGTH = 100;
-const DRAW_COLORS = new Set([
-  '#1c1917', '#dc2626', '#ea580c', '#ca8a04', '#16a34a',
-  '#2563eb', '#7c3aed', '#db2777', '#ffffff', '#fffbeb',
-]);
-const ALLOWED_MEDIA_TYPES = new Set(['image', 'video', 'audio', 'file']);
+const ALLOWED_MEDIA_TYPES = new Set(['image', 'gif', 'video', 'audio', 'file']);
 
 function rateLimitSocket(socket, eventName) {
   const config = RATE_LIMITS[eventName];
@@ -153,24 +156,6 @@ function rejectUnsafeText(socket, channel, text, options = {}) {
   return false;
 }
 
-function isFiniteCoordinate(value) {
-  return Number.isFinite(value) && value >= 0 && value <= 1000;
-}
-
-function isValidDrawLine(data) {
-  if (!data || typeof data !== 'object') return false;
-  return (
-    isFiniteCoordinate(data.x1) &&
-    isFiniteCoordinate(data.y1) &&
-    isFiniteCoordinate(data.x2) &&
-    isFiniteCoordinate(data.y2) &&
-    DRAW_COLORS.has(data.color) &&
-    Number.isFinite(data.size) &&
-    data.size >= 1 &&
-    data.size <= 72
-  );
-}
-
 async function getValidRoomReplyToId(roomId, replyToId) {
   if (!replyToId) return null;
 
@@ -191,6 +176,96 @@ async function getValidDirectMessageReplyToId(conversationId, replyToId) {
   });
 
   return replyTo && replyTo.conversationId === conversationId ? replyTo.id : null;
+}
+
+async function canManageRoom(roomId, userId) {
+  if (!roomId || !userId) return false;
+  const [room, currentUser] = await Promise.all([
+    prisma.room.findUnique({ where: { id: roomId }, select: { ownerId: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
+  ]);
+  return Boolean(room && (room.ownerId === userId || currentUser?.role === 'admin'));
+}
+
+async function saveDrawingStrokes(roomId, strokes) {
+  const cleanStrokes = normalizeDrawStrokes(strokes).slice(-MAX_DRAWING_STROKES);
+  await prisma.drawingState.upsert({
+    where: { roomId },
+    update: { strokes: cleanStrokes },
+    create: { roomId, strokes: cleanStrokes },
+  });
+  return cleanStrokes;
+}
+
+async function appendDrawingStroke(roomId, stroke) {
+  const state = await prisma.drawingState.findUnique({ where: { roomId } });
+  const current = normalizeDrawStrokes(state?.strokes || []);
+  const next = [...current, stroke].slice(-MAX_DRAWING_STROKES);
+  await saveDrawingStrokes(roomId, next);
+  return next;
+}
+
+const PICTIONARY_PROMPTS = [
+  'coffee cup',
+  'sleepy barista',
+  'rainy window',
+  'birthday cake',
+  'tiny library',
+  'space rocket',
+  'pizza slice',
+  'headphones',
+  'campfire',
+  'houseplant',
+  'treasure map',
+  'roller skates',
+  'moonlight',
+  'sandcastle',
+  'magic wand',
+  'pancake stack',
+  'camera',
+  'hot air balloon',
+  'lighthouse',
+  'paper airplane',
+];
+
+const pictionaryRooms = new Map();
+
+function pickPictionaryPrompt() {
+  return PICTIONARY_PROMPTS[Math.floor(Math.random() * PICTIONARY_PROMPTS.length)];
+}
+
+function publicPictionaryState(game) {
+  if (!game) return { active: false };
+  return {
+    active: true,
+    roundId: game.roundId,
+    drawerId: game.drawerId,
+    drawerSocketId: game.drawerSocketId,
+    drawerName: game.drawerName,
+    startedAt: game.startedAt,
+    durationSeconds: game.durationSeconds,
+    winnerId: game.winnerId || null,
+    winnerName: game.winnerName || null,
+    strokes: game.strokes || [],
+    guesses: game.guesses || [],
+  };
+}
+
+function normalizeGuess(value) {
+  return typeof value === 'string'
+    ? value.trim().toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ')
+    : '';
+}
+
+function emitPictionaryEnded(io, roomId, game, reason = 'ended') {
+  if (!game) return;
+  if (game.timer) clearTimeout(game.timer);
+  io.to(roomId).emit('pictionary:round-ended', {
+    ...publicPictionaryState(game),
+    answer: game.prompt,
+    reason,
+  });
+  pictionaryRooms.delete(roomId);
 }
 
 // ─── Empty Chair (ephemeral stranger chat) ───
@@ -533,7 +608,7 @@ export function setupSocketHandlers(io) {
     // Fetch user from database
     const user = await prisma.user.findUnique({
       where: { id: socket.userId },
-      select: { id: true, username: true, avatar: true, mood: true, status: true },
+      select: { id: true, username: true, avatar: true, mood: true, status: true, role: true },
     });
 
     if (!user) {
@@ -1322,10 +1397,250 @@ export function setupSocketHandlers(io) {
       });
     });
 
-    socket.on('draw:clear', () => {
+    socket.on('draw:cursor', (data = {}) => {
       if (!rateLimitSocket(socket, 'draw')) return;
       if (!socket.currentRoom) return;
-      socket.to(socket.currentRoom).emit('draw:clear');
+      const x = Number(data.x);
+      const y = Number(data.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0 || x > 1000 || y > 1000) return;
+      socket.to(socket.currentRoom).emit('draw:cursor', {
+        socketId: socket.id,
+        userId: socket.isAnonymous ? socket.id : user.id,
+        username: socket.isAnonymous ? socket.anonymousName : user.username,
+        x,
+        y,
+        color: typeof data.color === 'string' ? data.color : '#1c1917',
+        tool: data.tool === 'eraser' ? 'eraser' : 'pen',
+      });
+    });
+
+    socket.on('draw:cursor:leave', () => {
+      if (!socket.currentRoom) return;
+      socket.to(socket.currentRoom).emit('draw:cursor:leave', { socketId: socket.id });
+    });
+
+    socket.on('draw:stroke', async (data) => {
+      if (!rateLimitSocket(socket, 'draw')) return;
+      if (!socket.currentRoom) return;
+
+      const stroke = normalizeDrawStroke(data, {
+        authorId: user.id,
+        authorName: socket.isAnonymous ? socket.anonymousName : user.username,
+      });
+      if (!stroke) return;
+
+      try {
+        await appendDrawingStroke(socket.currentRoom, stroke);
+        io.to(socket.currentRoom).emit('draw:stroke', stroke);
+      } catch (error) {
+        console.error('Persist drawing stroke error:', error);
+        socket.emit('error', { message: 'Failed to save drawing stroke' });
+      }
+    });
+
+    socket.on('draw:undo', async () => {
+      if (!rateLimitSocket(socket, 'draw')) return;
+      if (!socket.currentRoom) return;
+
+      try {
+        const state = await prisma.drawingState.findUnique({ where: { roomId: socket.currentRoom } });
+        const current = normalizeDrawStrokes(state?.strokes || []);
+        const index = [...current].reverse().findIndex((stroke) => stroke.authorId === user.id);
+        if (index === -1) {
+          socket.emit('draw:undo:empty');
+          return;
+        }
+
+        const removeIndex = current.length - 1 - index;
+        const [removed] = current.splice(removeIndex, 1);
+        const next = await saveDrawingStrokes(socket.currentRoom, current);
+        io.to(socket.currentRoom).emit('draw:state', { strokes: next, undoneStroke: removed });
+      } catch (error) {
+        console.error('Undo drawing stroke error:', error);
+        socket.emit('error', { message: 'Failed to undo drawing stroke' });
+      }
+    });
+
+    socket.on('draw:erase', async ({ strokeIds } = {}) => {
+      if (!rateLimitSocket(socket, 'draw')) return;
+      if (!socket.currentRoom) return;
+      if (!Array.isArray(strokeIds) || strokeIds.length === 0) return;
+
+      const idsToErase = new Set(
+        strokeIds
+          .filter((id) => typeof id === 'string' && id.trim())
+          .map((id) => id.trim().slice(0, 80))
+          .slice(0, 120)
+      );
+      if (idsToErase.size === 0) return;
+
+      try {
+        const state = await prisma.drawingState.findUnique({ where: { roomId: socket.currentRoom } });
+        const current = normalizeDrawStrokes(state?.strokes || []);
+        const next = current.filter((stroke) => !idsToErase.has(stroke.id));
+        if (next.length === current.length) return;
+
+        const saved = await saveDrawingStrokes(socket.currentRoom, next);
+        io.to(socket.currentRoom).emit('draw:state', {
+          strokes: saved,
+          erasedStrokeIds: Array.from(idsToErase),
+        });
+      } catch (error) {
+        console.error('Erase drawing stroke error:', error);
+        socket.emit('error', { message: 'Failed to erase drawing stroke' });
+      }
+    });
+
+    socket.on('draw:clear', async () => {
+      if (!rateLimitSocket(socket, 'draw')) return;
+      if (!socket.currentRoom) return;
+
+      try {
+        if (!(await canManageRoom(socket.currentRoom, user.id))) {
+          socket.emit('error', { message: 'Only the room creator or an admin can clear the board' });
+          return;
+        }
+
+        await saveDrawingStrokes(socket.currentRoom, []);
+        io.to(socket.currentRoom).emit('draw:clear');
+      } catch (error) {
+        console.error('Clear drawing state error:', error);
+        socket.emit('error', { message: 'Failed to clear drawing board' });
+      }
+    });
+
+    socket.on('pictionary:state', () => {
+      if (!socket.currentRoom) return;
+      const game = pictionaryRooms.get(socket.currentRoom);
+      socket.emit('pictionary:state', {
+        ...publicPictionaryState(game),
+        prompt: game?.drawerId === user.id ? game.prompt : null,
+      });
+    });
+
+    socket.on('pictionary:start', () => {
+      if (!rateLimitSocket(socket, 'room')) return;
+      if (!socket.currentRoom) return;
+
+      const roomId = socket.currentRoom;
+      const existing = pictionaryRooms.get(roomId);
+      if (existing?.active) {
+        socket.emit('error', { message: 'A Pictionary round is already running' });
+        return;
+      }
+
+      const prompt = pickPictionaryPrompt();
+      const game = {
+        active: true,
+        roundId: `pic_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        drawerId: user.id,
+        drawerSocketId: socket.id,
+        drawerName: socket.isAnonymous ? socket.anonymousName : user.username,
+        prompt,
+        startedAt: new Date().toISOString(),
+        durationSeconds: 90,
+        strokes: [],
+        guesses: [],
+      };
+      game.timer = setTimeout(() => {
+        const latest = pictionaryRooms.get(roomId);
+        if (latest?.roundId === game.roundId) {
+          emitPictionaryEnded(io, roomId, latest, 'timeout');
+        }
+      }, game.durationSeconds * 1000);
+
+      pictionaryRooms.set(roomId, game);
+      io.to(roomId).emit('pictionary:round-started', publicPictionaryState(game));
+      socket.emit('pictionary:prompt', { roundId: game.roundId, prompt });
+    });
+
+    socket.on('pictionary:line', (data) => {
+      if (!rateLimitSocket(socket, 'draw')) return;
+      if (!socket.currentRoom) return;
+      const game = pictionaryRooms.get(socket.currentRoom);
+      if (!game?.active || game.drawerId !== user.id || !isValidDrawLine(data)) return;
+
+      socket.to(socket.currentRoom).emit('pictionary:line', {
+        x1: data.x1,
+        y1: data.y1,
+        x2: data.x2,
+        y2: data.y2,
+        color: data.color,
+        size: data.size,
+      });
+    });
+
+    socket.on('pictionary:stroke', (data) => {
+      if (!rateLimitSocket(socket, 'draw')) return;
+      if (!socket.currentRoom) return;
+      const game = pictionaryRooms.get(socket.currentRoom);
+      if (!game?.active || game.drawerId !== user.id) return;
+
+      const stroke = normalizeDrawStroke(data, {
+        authorId: user.id,
+        authorName: game.drawerName,
+      });
+      if (!stroke) return;
+
+      game.strokes = [...(game.strokes || []), stroke].slice(-180);
+      io.to(socket.currentRoom).emit('pictionary:stroke', stroke);
+    });
+
+    socket.on('pictionary:clear', () => {
+      if (!rateLimitSocket(socket, 'draw')) return;
+      if (!socket.currentRoom) return;
+      const game = pictionaryRooms.get(socket.currentRoom);
+      if (!game?.active || game.drawerId !== user.id) return;
+
+      game.strokes = [];
+      io.to(socket.currentRoom).emit('pictionary:clear');
+    });
+
+    socket.on('pictionary:guess', ({ guess } = {}) => {
+      if (!rateLimitSocket(socket, 'message')) return;
+      if (!socket.currentRoom) return;
+      const game = pictionaryRooms.get(socket.currentRoom);
+      if (!game?.active) return;
+      if (game.drawerId === user.id) {
+        socket.emit('error', { message: 'The drawer cannot guess this round' });
+        return;
+      }
+
+      const cleanGuess = typeof guess === 'string' ? guess.trim().slice(0, 80) : '';
+      if (!cleanGuess) return;
+
+      const entry = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        userId: user.id,
+        username: socket.isAnonymous ? socket.anonymousName : user.username,
+        guess: cleanGuess,
+        correct: normalizeGuess(cleanGuess) === normalizeGuess(game.prompt),
+        createdAt: new Date().toISOString(),
+      };
+
+      game.guesses = [...(game.guesses || []), entry].slice(-30);
+      io.to(socket.currentRoom).emit('pictionary:guess', entry);
+
+      if (entry.correct) {
+        game.winnerId = user.id;
+        game.winnerName = entry.username;
+        emitPictionaryEnded(io, socket.currentRoom, game, 'guessed');
+      }
+    });
+
+    socket.on('pictionary:end', async () => {
+      if (!rateLimitSocket(socket, 'room')) return;
+      if (!socket.currentRoom) return;
+      const game = pictionaryRooms.get(socket.currentRoom);
+      if (!game?.active) return;
+
+      const canEnd = game.drawerId === user.id || await canManageRoom(socket.currentRoom, user.id);
+      if (!canEnd) {
+        socket.emit('error', { message: 'Only the drawer, room creator, or admin can end the round' });
+        return;
+      }
+
+      emitPictionaryEnded(io, socket.currentRoom, game, 'ended');
     });
 
     // Handle typing indicator
@@ -1849,6 +2164,13 @@ function leaveRoom(socket, io, { silent = false, reason } = {}) {
 
   // Leave voice channel if in it
   leaveVoice(socket, io, roomId);
+
+  io.to(roomId).emit('draw:cursor:leave', { socketId: socket.id });
+
+  const pictionaryGame = pictionaryRooms.get(roomId);
+  if (pictionaryGame?.drawerSocketId === socket.id) {
+    emitPictionaryEnded(io, roomId, pictionaryGame, 'drawer_left');
+  }
 
   socket.leave(roomId);
 
