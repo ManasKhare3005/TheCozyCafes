@@ -114,8 +114,8 @@ jobs:
           DEPLOY_HOOK_URL: ${{ secrets.STAGING_DEPLOY_HOOK_URL }}
         run: |
           if [ -z "$DEPLOY_HOOK_URL" ]; then
-            echo "Missing STAGING_DEPLOY_HOOK_URL secret"
-            exit 1
+            echo "::notice::STAGING_DEPLOY_HOOK_URL is not configured; skipping staging deploy."
+            exit 0
           fi
           curl --fail --request POST "$DEPLOY_HOOK_URL"
 
