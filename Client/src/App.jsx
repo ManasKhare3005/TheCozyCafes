@@ -202,7 +202,7 @@ function MainApp() {
   if (dmFriend) {
     return (
       <>
-        <div className="flex h-screen overflow-hidden bg-cafe-50 cafe-texture">
+        <div className="flex h-[100dvh] overflow-hidden bg-cafe-50 cafe-texture">
           <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
             <DMChat
               friend={dmFriend}
@@ -221,7 +221,7 @@ function MainApp() {
   if (currentRoom) {
     return (
       <>
-        <div className="flex h-screen overflow-hidden bg-cafe-50 cafe-texture">
+        <div className="flex h-[100dvh] overflow-hidden bg-cafe-50 cafe-texture">
           <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
             <ChatRoom
               room={currentRoom}

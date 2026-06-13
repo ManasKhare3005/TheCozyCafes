@@ -252,7 +252,7 @@ function EmojiPicker({ onSelect, anchorRef, align = 'left' }) {
   return (
     <div
       ref={pickerElRef}
-      className={`fixed bg-white rounded-xl shadow-warm-lg border border-cafe-200/50 p-1.5 flex flex-wrap justify-center gap-0.5 z-50 ${
+      className={`fixed bg-white rounded-xl shadow-warm-lg border border-cafe-200/50 p-1.5 flex flex-wrap justify-center gap-0.5 z-50 animate-in ${
         position ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
@@ -350,7 +350,7 @@ function ChatMessage({ message, isOwnMessage, currentUserId, isAdmin, isPinned, 
     const isSender = message.sender?.id === currentUserId;
     return (
       <div className={`flex ${isSender ? 'justify-end' : 'justify-start'} mb-3`}>
-        <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl border border-purple-200 ${
+        <div className={`max-w-[86%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl border border-purple-200 ${
           isSender
             ? 'bg-purple-600 text-white rounded-tr-sm'
             : 'bg-purple-50 text-purple-900 rounded-tl-sm'
@@ -414,10 +414,10 @@ function ChatMessage({ message, isOwnMessage, currentUserId, isAdmin, isPinned, 
   const hasText = message.text && message.text.trim();
 
   return (
-    <div className={`group flex items-start gap-1 ${isOwnMessage ? 'justify-end animate-msg-in-right' : 'justify-start animate-msg-in-left'} mb-3`}>
+    <div className={`group flex items-start gap-1 sm:gap-1.5 ${isOwnMessage ? 'justify-end animate-msg-in-right' : 'justify-start animate-msg-in-left'} mb-3`}>
       {/* Action buttons — own messages (left side) */}
       {isOwnMessage && !compact && (
-        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 mt-2 transition-all shrink-0">
+        <div className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 flex items-center gap-0.5 mt-2 transition-all shrink-0">
           {onEdit && message.text && (Date.now() - new Date(message.timestamp).getTime() < 15 * 60 * 1000) && (
             <button
               onClick={handleStartEdit}
@@ -496,7 +496,7 @@ function ChatMessage({ message, isOwnMessage, currentUserId, isAdmin, isPinned, 
 
       <div
         onDoubleClick={handleDoubleClick}
-        className={`relative max-w-[70%] select-none ${
+        className={`relative max-w-[82%] sm:max-w-[70%] select-none ${
           isOwnMessage
             ? isAnonymous
               ? 'bg-amber-700 text-white rounded-2xl rounded-tr-sm'
@@ -606,7 +606,7 @@ function ChatMessage({ message, isOwnMessage, currentUserId, isAdmin, isPinned, 
 
       {/* Action buttons — other's messages (right side) */}
       {!isOwnMessage && !compact && (
-        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 mt-2 transition-all shrink-0">
+        <div className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 flex items-center gap-0.5 mt-2 transition-all shrink-0">
           {isAdmin && onDelete && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
@@ -696,7 +696,7 @@ function ChatMessage({ message, isOwnMessage, currentUserId, isAdmin, isPinned, 
 
       {/* Delete confirmation popup */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-cafe-900/50 modal-backdrop flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-cafe-900/50 modal-backdrop flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-xs w-full mx-4 shadow-warm-lg border border-cafe-200/50 text-center">
             <div className="w-12 h-12 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
               <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

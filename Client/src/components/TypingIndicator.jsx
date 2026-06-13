@@ -13,7 +13,7 @@ function TypingIndicator({ typingUsers }) {
   }
 
   return (
-    <div className="shrink-0 px-4 py-2 text-sm text-cafe-400 flex items-center gap-2 bg-white/50">
+    <div className="shrink-0 px-3 sm:px-4 py-2 text-xs sm:text-sm text-cafe-400 flex items-center gap-2 bg-white/50 animate-soft-enter">
       <span>{text}</span>
       <span className="flex gap-1">
         <span className="w-1.5 h-1.5 bg-cafe-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />

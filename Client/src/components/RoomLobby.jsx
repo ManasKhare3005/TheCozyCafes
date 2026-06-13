@@ -155,14 +155,14 @@ function UserMenu({ username, discriminator, referralCode, onLogout, tableCount,
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm
-                   border border-white/20 rounded-2xl pl-2 pr-3.5 py-1.5 transition-all duration-200"
+        className="motion-surface flex items-center gap-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm
+                   border border-white/20 rounded-2xl pl-2 pr-3.5 py-1.5 transition-all duration-200 max-w-[12rem] sm:max-w-none"
       >
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cafe-300 to-cafe-600
                         flex items-center justify-center text-white font-serif font-bold text-xs shadow-sm">
           {getInitials(username)}
         </div>
-        <span className="text-white font-medium text-sm">{username}</span>
+        <span className="text-white font-medium text-sm truncate">{username}</span>
         <svg className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
              fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -170,7 +170,7 @@ function UserMenu({ username, discriminator, referralCode, onLogout, tableCount,
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-warm-lg border border-cafe-200/50
+        <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-warm-lg border border-cafe-200/50
                         overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
           {/* User info */}
           <div className="px-4 py-3 border-b border-cafe-100">
@@ -335,7 +335,7 @@ function BaristaCard({ onClick }) {
   return (
     <div
       onClick={onClick}
-      className="group relative col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-cafe-700 via-cafe-800 to-cafe-900
+      className="motion-surface hover-lift animate-soft-enter group relative col-span-1 sm:col-span-2 xl:col-span-3 bg-gradient-to-r from-cafe-700 via-cafe-800 to-cafe-900
                  rounded-2xl border border-cafe-600/30 px-5 py-4 shadow-warm hover:shadow-warm-lg transition-all duration-200
                  cursor-pointer overflow-hidden"
     >
@@ -445,14 +445,14 @@ function RoomLobby({
   const totalMembers = rooms.reduce((sum, r) => sum + (r._count?.members || 0), 0);
 
   return (
-    <div className="min-h-screen bg-cafe-50 cafe-texture flex flex-col">
+    <div className="min-h-screen min-h-[100dvh] bg-cafe-50 cafe-texture flex flex-col overflow-x-hidden">
       {/* Cafe Header with background illustration */}
       <div className="lobby-header relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-cafe-50/80 z-10" />
-        <div className="relative z-20 pt-8 pb-12 px-4">
+        <div className="relative z-20 pt-5 sm:pt-8 pb-10 sm:pb-12 px-3 sm:px-4">
           <div className="max-w-5xl mx-auto">
             {/* User menu + notifications pinned top-right */}
-            <div className="flex justify-end items-center gap-2 mb-6">
+            <div className="flex justify-end items-center gap-2 mb-5 sm:mb-6">
               <NotificationBell
                 notifications={notifications}
                 unreadCount={notifUnreadCount}
@@ -479,9 +479,9 @@ function RoomLobby({
             {/* Centered title */}
             <div className="text-center max-w-2xl mx-auto">
               <div className="flex items-center justify-center gap-3 mb-3">
-                <h1 className="text-4xl font-serif font-bold text-white drop-shadow-md">The Cozy Cafes</h1>
+                <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white drop-shadow-md">The Cozy Cafes</h1>
               </div>
-              <p className="text-white/90 text-base mb-5">Your virtual cafe — take a table and start chatting</p>
+              <p className="text-white/90 text-sm sm:text-base mb-5">Your virtual cafe — take a table and start chatting</p>
 
               {/* Quick stats pills */}
               <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -501,9 +501,9 @@ function RoomLobby({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 -mt-6 relative z-30 pb-24 w-full flex-1">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 -mt-6 relative z-30 pb-8 lg:pb-28 w-full flex-1">
         {/* Search Bar */}
-        <div className="bg-white rounded-2xl shadow-warm-lg border border-cafe-200/50 px-4 py-3 flex items-center gap-3 mb-6">
+        <div className="motion-surface animate-soft-enter bg-white rounded-2xl shadow-warm-lg border border-cafe-200/50 px-4 py-3 flex items-center gap-3 mb-6">
           <svg className="w-5 h-5 text-cafe-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -515,7 +515,7 @@ function RoomLobby({
             className="flex-1 bg-transparent text-cafe-900 placeholder-cafe-400 outline-none text-sm"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-cafe-300 hover:text-cafe-500 transition-colors">
+            <button onClick={() => setSearchQuery('')} className="motion-surface text-cafe-300 hover:text-cafe-500 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -524,7 +524,7 @@ function RoomLobby({
         </div>
 
         {/* Daily ritual question */}
-        <div className="bg-gradient-to-r from-amber-50 to-cafe-50 rounded-2xl border border-amber-200/50 shadow-warm px-4 py-3 mb-6 flex items-start gap-3">
+        <div className="motion-surface animate-soft-enter bg-gradient-to-r from-amber-50 to-cafe-50 rounded-2xl border border-amber-200/50 shadow-warm px-4 py-3 mb-6 flex items-start gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             <span className="text-2xl shrink-0">📋</span>
             <div className="min-w-0">
@@ -536,10 +536,11 @@ function RoomLobby({
 
         {/* Tabs + Actions */}
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-          <div className="flex gap-1 bg-cafe-100 rounded-xl p-1">
+          <div className="w-full sm:w-auto overflow-x-auto scrollbar-hide">
+          <div className="inline-flex min-w-max gap-1 bg-cafe-100 rounded-xl p-1">
             <button
               onClick={() => setActiveTab('my')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`motion-surface px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                 activeTab === 'my'
                   ? 'bg-white text-cafe-900 shadow-sm'
                   : 'text-cafe-500 hover:text-cafe-700'
@@ -549,7 +550,7 @@ function RoomLobby({
             </button>
             <button
               onClick={() => setActiveTab('public')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`motion-surface px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                 activeTab === 'public'
                   ? 'bg-white text-cafe-900 shadow-sm'
                   : 'text-cafe-500 hover:text-cafe-700'
@@ -559,7 +560,7 @@ function RoomLobby({
             </button>
             <button
               onClick={() => setActiveTab('friends')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative ${
+              className={`motion-surface px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative whitespace-nowrap ${
                 activeTab === 'friends'
                   ? 'bg-white text-cafe-900 shadow-sm'
                   : 'text-cafe-500 hover:text-cafe-700'
@@ -573,11 +574,12 @@ function RoomLobby({
               )}
             </button>
           </div>
+          </div>
 
-          <div className="relative group/board inline-block">
+          <div className="relative group/board inline-block w-full sm:w-auto">
             <button
               onClick={onOpenBoard}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium
+              className="motion-surface hover-lift flex w-full sm:w-auto items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium
                          bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors border border-amber-200/50"
             >
               <span className="text-base">📌</span>
@@ -589,10 +591,10 @@ function RoomLobby({
             </div>
           </div>
 
-          <div className="relative group/lf inline-block">
+          <div className="relative group/lf inline-block w-full sm:w-auto">
             <button
               onClick={onOpenLostFound}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium
+              className="motion-surface hover-lift flex w-full sm:w-auto items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium
                          bg-sky-100 text-sky-800 hover:bg-sky-200 transition-colors border border-sky-200/50"
             >
               <span className="text-base">🔍</span>
@@ -604,10 +606,10 @@ function RoomLobby({
             </div>
           </div>
 
-          <div className="relative group/ec inline-block">
+          <div className="relative group/ec inline-block w-full sm:w-auto">
             <button
               onClick={onOpenEmptyChair}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium
+              className="motion-surface hover-lift flex w-full sm:w-auto items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium
                          bg-violet-100 text-violet-800 hover:bg-violet-200 transition-colors border border-violet-200/50"
             >
               <span className="text-base">🪑</span>
@@ -619,16 +621,16 @@ function RoomLobby({
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowJoinCodeModal(true)}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-cafe-100 text-cafe-700 hover:bg-cafe-200 transition-colors"
+              className="motion-surface hover-lift px-4 py-2 rounded-xl text-sm font-medium bg-cafe-100 text-cafe-700 hover:bg-cafe-200 transition-colors"
             >
               Enter Code
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-cafe-700 text-white hover:bg-cafe-800 transition-colors shadow-warm"
+              className="motion-surface hover-lift px-4 py-2 rounded-xl text-sm font-medium bg-cafe-700 text-white hover:bg-cafe-800 transition-colors shadow-warm"
             >
               + New Table
             </button>
@@ -640,7 +642,7 @@ function RoomLobby({
           <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
             <button
               onClick={() => setCategoryFilter(null)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+              className={`motion-surface shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
                 !categoryFilter
                   ? 'bg-cafe-700 text-white shadow-sm'
                   : 'bg-cafe-100 text-cafe-500 hover:bg-cafe-200'
@@ -652,7 +654,7 @@ function RoomLobby({
               <button
                 key={cat.value}
                 onClick={() => setCategoryFilter(categoryFilter === cat.value ? null : cat.value)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1 ${
+                className={`motion-surface shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1 ${
                   categoryFilter === cat.value
                     ? 'bg-cafe-700 text-white shadow-sm'
                     : `${cat.color} hover:opacity-80`
@@ -709,18 +711,18 @@ function RoomLobby({
               <p className="text-cafe-400 text-sm mb-6">
                 {activeTab === 'my' ? 'Browse public tables or create your own!' : 'Be the first to create one!'}
               </p>
-              <div className="flex items-center justify-center gap-3">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 {activeTab === 'my' && (
                   <button
                     onClick={() => setActiveTab('public')}
-                    className="px-5 py-2.5 rounded-xl text-sm font-medium bg-cafe-100 text-cafe-700 hover:bg-cafe-200 transition-colors"
+                    className="motion-surface hover-lift w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-medium bg-cafe-100 text-cafe-700 hover:bg-cafe-200 transition-colors"
                   >
                     Browse Public Tables
                   </button>
                 )}
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="px-5 py-2.5 rounded-xl text-sm font-medium bg-cafe-700 text-white hover:bg-cafe-800 transition-colors shadow-warm"
+                  className="motion-surface hover-lift w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-medium bg-cafe-700 text-white hover:bg-cafe-800 transition-colors shadow-warm"
                 >
                   + Create a Table
                 </button>
@@ -728,7 +730,7 @@ function RoomLobby({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {activeTab === 'my' && !searchQuery && (
               <BaristaCard onClick={onOpenBarista} />
             )}
@@ -748,8 +750,8 @@ function RoomLobby({
       </div>
 
       {/* Footer with daily quote */}
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-cafe-200/50 bg-white/80 backdrop-blur-sm z-30">
-        <div className="max-w-5xl mx-auto px-4 py-6">
+      <footer className="mt-10 lg:mt-0 lg:fixed bottom-0 left-0 right-0 border-t border-cafe-200/50 bg-white/80 backdrop-blur-sm z-30">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-start gap-3 max-w-lg">
               <span className="text-cafe-300 text-xl shrink-0 mt-0.5">,,</span>
@@ -834,8 +836,8 @@ function RoomCard({ room, emoji, isJoined, onSelect, onJoin, currentUserId }) {
   return (
     <div
       onClick={isJoined ? onSelect : undefined}
-      className={`group bg-white rounded-2xl border border-cafe-200/50 p-4 shadow-warm hover:shadow-warm-lg transition-all duration-200 ${
-        isJoined ? 'cursor-pointer hover:-translate-y-1' : ''
+      className={`motion-surface hover-lift animate-soft-enter group bg-white rounded-2xl border border-cafe-200/50 p-4 shadow-warm hover:shadow-warm-lg transition-all duration-200 ${
+        isJoined ? 'cursor-pointer' : ''
       }`}
     >
       {/* Top row: emoji + badges */}
@@ -845,7 +847,7 @@ function RoomCard({ room, emoji, isJoined, onSelect, onJoin, currentUserId }) {
           <span className="text-2xl">{emoji}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <h3 className="font-serif font-bold text-cafe-900 text-[15px] truncate leading-tight">{room.name}</h3>
             {isJoined && room.unreadCount > 0 && (
               <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold bg-amber-500 text-white rounded-full shrink-0">
@@ -853,7 +855,7 @@ function RoomCard({ room, emoji, isJoined, onSelect, onJoin, currentUserId }) {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
             {room.isPrivate && (
               <span className="inline-flex items-center gap-0.5 text-[10px] bg-cafe-100 text-cafe-500 px-1.5 py-0.5 rounded-full font-medium">
                 <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -894,7 +896,7 @@ function RoomCard({ room, emoji, isJoined, onSelect, onJoin, currentUserId }) {
       </p>
 
       {/* Bottom row */}
-      <div className="flex items-center justify-between pt-2 border-t border-cafe-100">
+      <div className="flex items-center justify-between gap-3 pt-2 border-t border-cafe-100">
         {/* Seats around the table — filled = taken */}
         <span
           className="flex items-center gap-1"
@@ -917,7 +919,7 @@ function RoomCard({ room, emoji, isJoined, onSelect, onJoin, currentUserId }) {
         {isJoined ? (
           <button
             onClick={onSelect}
-            className="bg-cafe-700 hover:bg-cafe-800 text-white text-xs font-medium px-4 py-1.5 rounded-xl transition-colors shadow-sm"
+            className="motion-surface bg-cafe-700 hover:bg-cafe-800 text-white text-xs font-medium px-4 py-1.5 rounded-xl transition-colors shadow-sm shrink-0"
           >
             Sit down
           </button>
@@ -925,7 +927,7 @@ function RoomCard({ room, emoji, isJoined, onSelect, onJoin, currentUserId }) {
           <button
             onClick={handleJoin}
             disabled={joining}
-            className="bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-300 text-white text-xs font-medium px-4 py-1.5 rounded-xl transition-colors shadow-sm"
+            className="motion-surface bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-300 text-white text-xs font-medium px-4 py-1.5 rounded-xl transition-colors shadow-sm shrink-0"
           >
             {joining ? 'Joining...' : 'Join table'}
           </button>
@@ -973,7 +975,7 @@ function CreateRoomModal({ onClose, onCreate, onRoomCreated }) {
 
   return (
     <div className="fixed inset-0 bg-cafe-900/40 modal-backdrop flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-warm-lg border border-cafe-200/50 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-warm-lg border border-cafe-200/50 max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-serif font-bold text-cafe-900 mb-4">Create a Table</h3>
 
         {error && (
@@ -1032,7 +1034,7 @@ function CreateRoomModal({ onClose, onCreate, onRoomCreated }) {
           {/* Table size */}
           <div>
             <label className="block text-sm font-medium text-cafe-700 mb-2">Table Size</label>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
                 onClick={() => setMaxMembers(5)}
@@ -1098,9 +1100,9 @@ function CreateRoomModal({ onClose, onCreate, onRoomCreated }) {
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 bg-cafe-100 hover:bg-cafe-200 text-cafe-700 py-2.5 rounded-xl transition-colors">Cancel</button>
-            <button type="submit" disabled={isLoading || !name.trim()} className="flex-1 bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-300 text-white py-2.5 rounded-xl transition-colors shadow-warm">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button type="button" onClick={onClose} className="motion-surface flex-1 bg-cafe-100 hover:bg-cafe-200 text-cafe-700 py-2.5 rounded-xl transition-colors">Cancel</button>
+            <button type="submit" disabled={isLoading || !name.trim()} className="motion-surface flex-1 bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-300 text-white py-2.5 rounded-xl transition-colors shadow-warm">
               {isLoading ? 'Creating...' : 'Create'}
             </button>
           </div>
@@ -1132,7 +1134,7 @@ function JoinCodeModal({ onClose, onJoin, onSelectRoom }) {
 
   return (
     <div className="fixed inset-0 bg-cafe-900/40 modal-backdrop flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-warm-lg border border-cafe-200/50">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-warm-lg border border-cafe-200/50">
         <h3 className="text-xl font-serif font-bold text-cafe-900 mb-4">Enter Invite Code</h3>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl mb-4 text-sm">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -1149,9 +1151,9 @@ function JoinCodeModal({ onClose, onJoin, onSelectRoom }) {
               required
             />
           </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 bg-cafe-100 hover:bg-cafe-200 text-cafe-700 py-2.5 rounded-xl transition-colors">Cancel</button>
-            <button type="submit" disabled={isLoading || !code.trim()} className="flex-1 bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-300 text-white py-2.5 rounded-xl transition-colors shadow-warm">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button type="button" onClick={onClose} className="motion-surface flex-1 bg-cafe-100 hover:bg-cafe-200 text-cafe-700 py-2.5 rounded-xl transition-colors">Cancel</button>
+            <button type="submit" disabled={isLoading || !code.trim()} className="motion-surface flex-1 bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-300 text-white py-2.5 rounded-xl transition-colors shadow-warm">
               {isLoading ? 'Joining...' : 'Join'}
             </button>
           </div>

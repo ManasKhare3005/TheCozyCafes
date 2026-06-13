@@ -93,7 +93,7 @@ function AmbienceToggle() {
     <div className="relative" ref={pickerRef}>
       <button
         onClick={() => setShowPicker(!showPicker)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm transition-all ${
+        className={`motion-surface hover-lift flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm transition-all shrink-0 whitespace-nowrap ${
           isPlaying
             ? 'bg-cafe-700 text-white shadow-warm'
             : 'bg-cafe-100 text-cafe-600 hover:bg-cafe-200'
@@ -105,7 +105,7 @@ function AmbienceToggle() {
       </button>
 
       {showPicker && (
-        <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-warm-lg border border-cafe-200/50 overflow-hidden z-50">
+        <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-warm-lg border border-cafe-200/50 overflow-hidden z-50 animate-in">
           <div className="p-3 border-b border-cafe-100">
             <p className="text-xs font-medium text-cafe-700 mb-2">Ambience Sounds</p>
             <div className="space-y-1">
@@ -116,7 +116,7 @@ function AmbienceToggle() {
                     setActiveTrack(track.id);
                     setIsPlaying(true);
                   }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-left transition-colors ${
+                  className={`motion-surface w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-left transition-colors ${
                     activeTrack === track.id && isPlaying
                       ? 'bg-cafe-100 text-cafe-800 font-medium'
                       : 'text-cafe-600 hover:bg-cafe-50'
@@ -153,7 +153,7 @@ function AmbienceToggle() {
           <div className="p-2">
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className={`w-full py-2 rounded-xl text-sm font-medium transition-colors ${
+              className={`motion-surface w-full py-2 rounded-xl text-sm font-medium transition-colors ${
                 isPlaying
                   ? 'bg-red-50 text-red-600 hover:bg-red-100'
                   : 'bg-cafe-700 text-white hover:bg-cafe-800'

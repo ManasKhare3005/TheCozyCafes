@@ -263,7 +263,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4">
+      <form onSubmit={handleSubmit} className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-3 sm:p-4">
         {/* File picker button */}
         <input
           ref={fileInputRef}
@@ -276,7 +276,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || uploading}
-          className="p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors
+          className="motion-surface p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors
                      disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           title="Attach file"
         >
@@ -292,7 +292,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
             type="button"
             onClick={() => setShowGifPicker(!showGifPicker)}
             disabled={disabled || uploading}
-            className="p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors
+            className="motion-surface p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors
                        disabled:opacity-50 disabled:cursor-not-allowed shrink-0 font-bold text-xs"
             title="Send a GIF"
           >
@@ -322,7 +322,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
           ref={inputRef}
           placeholder={disabled ? 'Connecting...' : uploading ? 'Uploading...' : placeholder}
           disabled={disabled || uploading}
-          className="flex-1 bg-cafe-50 text-cafe-900 placeholder-cafe-400 rounded-xl px-4 py-3
+          className="order-first sm:order-none flex-[1_1_100%] sm:flex-1 min-w-0 bg-cafe-50 text-cafe-900 placeholder-cafe-400 rounded-xl px-4 py-3
                      border border-cafe-200 focus:outline-none focus:ring-2 focus:ring-cafe-300 focus:border-cafe-300
                      disabled:opacity-50 transition-colors"
         />
@@ -333,7 +333,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
               type="button"
               onClick={() => setShowSchedulePicker(!showSchedulePicker)}
               disabled={disabled || uploading || !text.trim()}
-              className="p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors
+              className="motion-surface p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors
                          disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               title="Schedule message"
             >
@@ -342,7 +342,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
               </svg>
             </button>
             {showSchedulePicker && (
-              <div className="absolute bottom-full right-0 mb-2 bg-white border border-cafe-200 rounded-2xl shadow-warm-lg p-4 w-64 z-50">
+              <div className="absolute bottom-full right-0 mb-2 bg-white border border-cafe-200 rounded-2xl shadow-warm-lg p-4 w-64 max-w-[calc(100vw-1.5rem)] z-50 animate-in">
                 <p className="text-sm font-medium text-cafe-700 mb-3">Schedule message</p>
                 <div className="space-y-2 mb-3">
                   <input
@@ -363,7 +363,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
                   <button
                     type="button"
                     onClick={() => setShowSchedulePicker(false)}
-                    className="flex-1 text-xs text-cafe-500 hover:bg-cafe-100 py-2 rounded-xl transition-colors"
+                    className="motion-surface flex-1 text-xs text-cafe-500 hover:bg-cafe-100 py-2 rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
@@ -383,7 +383,7 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
                       setShowSchedulePicker(false);
                       onTyping(false);
                     }}
-                    className="flex-1 text-xs bg-cafe-700 text-white hover:bg-cafe-800 disabled:bg-cafe-300 py-2 rounded-xl transition-colors font-medium"
+                    className="motion-surface flex-1 text-xs bg-cafe-700 text-white hover:bg-cafe-800 disabled:bg-cafe-300 py-2 rounded-xl transition-colors font-medium"
                   >
                     Schedule
                   </button>
@@ -396,8 +396,8 @@ const MessageInput = forwardRef(function MessageInput({ onSend, onTyping, disabl
         <button
           type="submit"
           disabled={disabled || uploading || (!text.trim() && !pendingMedia)}
-          className="bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-200 disabled:text-cafe-400 disabled:cursor-not-allowed
-                     text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-warm hover:shadow-warm-lg"
+          className="motion-surface bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-200 disabled:text-cafe-400 disabled:cursor-not-allowed
+                     text-white font-medium px-5 sm:px-6 py-3 rounded-xl transition-all duration-200 shadow-warm hover:shadow-warm-lg shrink-0"
         >
           <span className="inline-flex items-center gap-1.5">
             Send

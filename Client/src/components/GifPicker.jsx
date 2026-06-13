@@ -73,7 +73,7 @@ function GifPicker({ onSelect, onClose }) {
   return (
     <div
       ref={pickerRef}
-      className="absolute bottom-full mb-2 left-0 w-80 bg-white rounded-2xl shadow-warm-lg border border-cafe-200/50 overflow-hidden z-50"
+      className="absolute bottom-full mb-2 left-0 w-80 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-warm-lg border border-cafe-200/50 overflow-hidden z-50 animate-in"
     >
       {/* Header */}
       <div className="p-3 border-b border-cafe-100">
@@ -89,7 +89,7 @@ function GifPicker({ onSelect, onClose }) {
           />
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors"
+            className="motion-surface p-1.5 rounded-lg text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -100,7 +100,7 @@ function GifPicker({ onSelect, onClose }) {
       </div>
 
       {/* GIF grid */}
-      <div className="h-64 overflow-y-auto p-2">
+      <div className="h-64 overflow-y-auto p-2 chat-messages">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-cafe-400 text-sm">Loading...</div>
@@ -118,7 +118,7 @@ function GifPicker({ onSelect, onClose }) {
               <button
                 key={gif.id}
                 onClick={() => onSelect(gif)}
-                className="rounded-xl overflow-hidden hover:ring-2 hover:ring-cafe-400 transition-all bg-cafe-100"
+                className="motion-surface rounded-xl overflow-hidden hover:ring-2 hover:ring-cafe-400 transition-all bg-cafe-100"
               >
                 <img
                   src={gif.preview || gif.url}

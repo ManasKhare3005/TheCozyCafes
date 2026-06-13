@@ -72,7 +72,7 @@ function SoundToggle() {
   return (
     <button
       onClick={toggle}
-      className={`flex items-center justify-center w-9 h-9 rounded-xl text-sm transition-colors ${
+      className={`motion-surface hover-lift flex items-center justify-center w-9 h-9 rounded-xl text-sm transition-colors shrink-0 ${
         on ? 'bg-cafe-100 text-cafe-700 hover:bg-cafe-200' : 'bg-cafe-50 text-cafe-300 hover:bg-cafe-100'
       }`}
       title={on ? 'Mute cafe sounds (message clinks, door chime)' : 'Unmute cafe sounds'}
@@ -114,7 +114,7 @@ function HeaderMenu({ label, title, items, accent = 'bg-cafe-400', className = '
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setOpen((value) => !value)}
-        className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-gradient-to-b from-white to-cafe-50 text-cafe-700 hover:text-cafe-900 border border-cafe-200/70 shadow-sm hover:shadow-warm transition-all ${className}`}
+        className={`motion-surface hover-lift group flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-gradient-to-b from-white to-cafe-50 text-cafe-700 hover:text-cafe-900 border border-cafe-200/70 shadow-sm hover:shadow-warm transition-all whitespace-nowrap shrink-0 ${className}`}
         title={title || label}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -130,7 +130,7 @@ function HeaderMenu({ label, title, items, accent = 'bg-cafe-400', className = '
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 mt-2 w-64 rounded-2xl border border-cafe-200/80 bg-white shadow-warm-lg z-40 overflow-hidden p-1.5"
+          className="absolute right-0 mt-2 w-60 sm:w-64 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-cafe-200/80 bg-white shadow-warm-lg z-40 overflow-hidden p-1.5 animate-in"
         >
           {visibleItems.map((item) => (
             <button
@@ -141,7 +141,7 @@ function HeaderMenu({ label, title, items, accent = 'bg-cafe-400', className = '
                 setOpen(false);
                 item.onClick();
               }}
-              className="group/item w-full flex items-start gap-3 text-left px-3 py-2.5 rounded-xl text-sm text-cafe-700 hover:bg-cafe-50 transition-colors"
+              className="motion-surface group/item w-full flex items-start gap-3 text-left px-3 py-2.5 rounded-xl text-sm text-cafe-700 hover:bg-cafe-50 transition-colors"
             >
               <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${item.accent || accent}`} />
               <span className="flex-1 min-w-0">
@@ -384,12 +384,12 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       )}
 
       {/* Header */}
-      <header className="shrink-0 bg-white border-b border-cafe-200/50 px-4 lg:px-6 py-3 flex items-center justify-between gap-3 shadow-sm">
+      <header className="shrink-0 bg-white border-b border-cafe-200/50 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 shadow-sm">
         {/* Left: Back button + Room info */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 w-full sm:flex-1">
           <button
             onClick={onBack}
-            className="p-2 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors -ml-2"
+            className="motion-surface p-2 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors -ml-2 shrink-0"
             title="Back to lobby"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -398,7 +398,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
           </button>
         <button
           onClick={onShowRoomInfo}
-          className="flex items-center gap-3 hover:bg-cafe-50 rounded-xl px-2 py-1 transition-colors min-w-0"
+          className="motion-surface flex items-center gap-2 sm:gap-3 hover:bg-cafe-50 rounded-xl px-2 py-1 transition-colors min-w-0"
         >
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-serif font-bold text-sm shadow-sm
             ${room.isPrivate
@@ -412,15 +412,15 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
             ) : room.name.charAt(0).toUpperCase()}
           </div>
           <div className="text-left min-w-0">
-            <h1 className="text-lg font-serif font-bold text-cafe-900 flex items-center gap-2 min-w-0">
-              <span className="truncate max-w-[15rem] lg:max-w-[22rem]">{room.name}</span>
+            <h1 className="text-base sm:text-lg font-serif font-bold text-cafe-900 flex items-center gap-2 min-w-0">
+              <span className="truncate max-w-[11rem] sm:max-w-[15rem] lg:max-w-[22rem]">{room.name}</span>
               {isAnonymousRoom && <span className="text-amber-600 text-sm font-sans font-normal">anonymous room</span>}
               {isAnonymous && !isAnonymousRoom && <span className="text-amber-600 text-sm font-sans font-normal">incognito</span>}
               <svg className="w-4 h-4 text-cafe-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </h1>
-            <p className="text-sm text-cafe-500">
+            <p className="text-xs sm:text-sm text-cafe-500">
               {isConnected ? (
                 <span className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-green-500 rounded-full" />
@@ -438,11 +438,11 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
         </div>
 
         {/* Right: Controls */}
-        <div className="flex flex-wrap items-center justify-end gap-1.5 min-w-0">
+        <div className="w-full sm:w-auto flex flex-nowrap sm:flex-wrap items-center sm:justify-end gap-1.5 min-w-0 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 scrollbar-hide">
           {/* Search messages */}
           <button
             onClick={() => setShowSearch(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-cafe-50 text-cafe-600 hover:bg-cafe-100 transition-colors"
+            className="motion-surface hover-lift flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm bg-cafe-50 text-cafe-600 hover:bg-cafe-100 transition-colors shrink-0 whitespace-nowrap"
             title="Search Messages"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -466,7 +466,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
           {/* Incognito toggle */}
           <button
             onClick={toggleIncognito}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm transition-all duration-200 ${
+            className={`motion-surface hover-lift flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm transition-all duration-200 shrink-0 whitespace-nowrap ${
               isIncognito
                 ? 'bg-amber-700 text-white shadow-warm'
                 : 'bg-cafe-100 text-cafe-600 hover:bg-cafe-200'
@@ -481,10 +481,10 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
           </button>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-cafe-200 mx-1"></div>
+          <div className="hidden sm:block w-px h-6 bg-cafe-200 mx-1 shrink-0"></div>
 
           {/* User pill with avatar + logout */}
-          <div className="flex items-center gap-1.5 bg-cafe-50 border border-cafe-200/50 rounded-2xl pl-1.5 pr-1.5 py-1">
+          <div className="motion-surface flex items-center gap-1.5 bg-cafe-50 border border-cafe-200/50 rounded-2xl pl-1.5 pr-1.5 py-1 shrink-0">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cafe-300 to-cafe-600
                             flex items-center justify-center text-white font-serif font-bold text-[10px] shadow-sm shrink-0">
               {(isAnonymousRoom ? (anonymousName || 'A') : user.username).split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -495,7 +495,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
             </span>
             <button
               onClick={onLogout}
-              className="text-cafe-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+              className="motion-surface text-cafe-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
               title="Sign out"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -509,7 +509,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Ambient status bar */}
       {Object.keys(userAmbience).length > 0 && (
-        <div className="shrink-0 bg-cafe-50/80 border-b border-cafe-200/50 px-4 py-1.5 flex items-center gap-3 overflow-x-auto">
+        <div className="shrink-0 bg-cafe-50/80 border-b border-cafe-200/50 px-3 sm:px-4 py-1.5 flex items-center gap-3 overflow-x-auto scrollbar-hide">
           <span className="text-[10px] text-cafe-400 shrink-0">Vibing:</span>
           {Object.entries(userAmbience).map(([userId, { emoji, name }]) => {
             const u = onlineUsers.find((o) => o.id === userId);
@@ -533,7 +533,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
               ? 'bg-amber-50 border-amber-200'
               : 'bg-orange-50 border-orange-200'
         }`}>
-          <p className="text-sm">
+          <p className="text-xs sm:text-sm">
             {isAnonymous && (
               <span className="text-amber-800">
                 {isAnonymousRoom
@@ -555,7 +555,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
         <div className="shrink-0 border-b border-cafe-200/50 bg-white">
           <button
             onClick={() => setShowPins(!showPins)}
-            className="w-full flex items-center gap-2 px-4 py-2 text-xs text-cafe-600 hover:bg-cafe-50 transition-colors"
+            className="w-full flex items-center gap-2 px-3 sm:px-4 py-2 text-xs text-cafe-600 hover:bg-cafe-50 transition-colors"
           >
             <svg className="w-3.5 h-3.5 text-cafe-400" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.828 3.414a2 2 0 012.586-.586l.586.293a2 2 0 01.707 2.707l-1.414 1.414 2.121 2.121 1.414-1.414a2 2 0 012.707.707l.293.586a2 2 0 01-.586 2.586L16.12 13.95a2 2 0 01-2.828 0l-.707-.707L10 15.828a2 2 0 01-2.828 0L5.05 13.707a2 2 0 010-2.828L7.172 8.757l-.707-.707a2 2 0 010-2.828L9.828 3.414z" />
@@ -566,7 +566,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
             </svg>
           </button>
           {showPins && (
-            <div className="px-4 pb-3 space-y-2">
+            <div className="px-3 sm:px-4 pb-3 space-y-2">
               {pinnedMessages.map((pin) => (
                 <div key={pin.id} className="flex items-start gap-2 bg-cafe-50 rounded-xl px-3 py-2 border border-cafe-200/50">
                   <div className="flex-1 min-w-0">
@@ -595,13 +595,13 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Today's Special - cafe menu icebreaker */}
       {cafeMenu && !menuDismissed && (
-        <div className="shrink-0 bg-gradient-to-r from-amber-50 to-cafe-50 border-b border-amber-200/50 px-4 py-2.5 flex items-center gap-3">
+        <div className="shrink-0 bg-gradient-to-r from-amber-50 to-cafe-50 border-b border-amber-200/50 px-3 sm:px-4 py-2.5 flex items-center gap-3 animate-soft-enter">
           <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
             <CafeCupIcon className="w-4 h-4" />
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Today's Special</p>
-            <p className="text-sm text-cafe-800 font-serif">{cafeMenu}</p>
+            <p className="text-sm text-cafe-800 font-serif leading-snug">{cafeMenu}</p>
           </div>
           <button
             onClick={() => setMenuDismissed(true)}
@@ -615,7 +615,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
       )}
 
       {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 chat-messages">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4 chat-messages">
         {isLoadingHistory ? (
           <div className="flex items-center justify-center h-full">
             <CafeLoader size="small" message="Fetching messages..." />
@@ -664,8 +664,8 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Cafe closed banner */}
       {isCafeClosed && cafeHours && (
-        <div className="shrink-0 bg-amber-50 border-t border-amber-200 px-4 py-3 text-center">
-          <div className="flex items-center justify-center gap-2 text-amber-800">
+        <div className="shrink-0 bg-amber-50 border-t border-amber-200 px-3 sm:px-4 py-3 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-2 text-amber-800">
             <CafeCupIcon className="w-5 h-5 shrink-0" />
             <p className="text-sm font-medium">
               This table is closed for the day. Come back between{' '}
@@ -679,13 +679,13 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Conversation starter card (quiet room) */}
       {starter && !isCafeClosed && (
-        <div className="shrink-0 bg-amber-50 border-t border-amber-200 px-4 py-2.5 flex items-center gap-3 animate-card-slide">
+        <div className="shrink-0 bg-amber-50 border-t border-amber-200 px-3 sm:px-4 py-2.5 flex items-center gap-3 animate-card-slide">
           <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
             <CafeCupIcon className="w-4 h-4" />
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wide text-amber-600">The Barista slides a card onto the table</p>
-            <p className="text-sm text-cafe-800 truncate">{starter}</p>
+            <p className="text-sm text-cafe-800 sm:truncate leading-snug">{starter}</p>
           </div>
           <button
             onClick={() => {
@@ -714,7 +714,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Whisper mode indicator */}
       {whisperTarget && (
-        <div className="shrink-0 bg-purple-50 border-t border-purple-200 px-4 py-2 flex items-center gap-2">
+        <div className="shrink-0 bg-purple-50 border-t border-purple-200 px-3 sm:px-4 py-2 flex items-center gap-2">
           <span className="text-purple-600 text-xs font-medium">Whispering to {whisperTarget.username}</span>
           <button
             onClick={() => setWhisperTarget(null)}
@@ -880,7 +880,7 @@ function ChatRoom({ room, onShowRoomInfo, onLogout, onBack, onKicked }) {
 
       {/* Kick Notification Modal */}
       {kickInfo && (
-        <div className="fixed inset-0 bg-cafe-900/50 modal-backdrop flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-cafe-900/50 modal-backdrop flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-warm-lg border border-red-200 text-center">
             <div className="w-14 h-14 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
               <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

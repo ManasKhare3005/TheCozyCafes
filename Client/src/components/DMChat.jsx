@@ -104,18 +104,18 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
   return (
     <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden bg-cafe-50">
       {/* Header */}
-      <header className="shrink-0 bg-white border-b border-cafe-200/50 px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2">
+      <header className="shrink-0 bg-white border-b border-cafe-200/50 px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 shadow-sm">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={onBack}
-            className="p-2 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors -ml-2"
+            className="motion-surface p-2 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors -ml-2 shrink-0"
             title="Back to lobby"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="relative">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cafe-300 to-cafe-600
                               flex items-center justify-center text-white font-serif font-bold text-sm shadow-sm">
@@ -125,9 +125,9 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
                 isOnline ? 'bg-green-500' : 'bg-cafe-300'
               }`} />
             </div>
-            <div className="text-left">
-              <h1 className="text-lg font-serif font-bold text-cafe-900">{friend.username}</h1>
-              <p className={`text-sm ${isOnline ? 'text-green-600' : 'text-cafe-400'}`}>
+            <div className="text-left min-w-0">
+              <h1 className="text-base sm:text-lg font-serif font-bold text-cafe-900 truncate max-w-[9rem] sm:max-w-none">{friend.username}</h1>
+              <p className={`text-xs sm:text-sm truncate ${isOnline ? 'text-green-600' : 'text-cafe-400'}`}>
                 {isOnline
                   ? (friendMood && MOOD_CONFIG[friendMood]
                     ? `${MOOD_CONFIG[friendMood].emoji} ${MOOD_CONFIG[friendMood].label}`
@@ -139,10 +139,10 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
         </div>
 
         {/* Call buttons */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 overflow-x-auto scrollbar-hide">
           <button
             onClick={reportFriend}
-            className="p-2.5 rounded-xl text-cafe-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+            className="motion-surface p-2 sm:p-2.5 rounded-xl text-cafe-500 hover:text-red-600 hover:bg-red-50 transition-colors"
             title="Report user"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +151,7 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
           </button>
           <button
             onClick={blockFriend}
-            className="p-2.5 rounded-xl text-cafe-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+            className="motion-surface p-2 sm:p-2.5 rounded-xl text-cafe-500 hover:text-red-600 hover:bg-red-50 transition-colors"
             title="Block user"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
           <button
             onClick={() => startCall('voice')}
             disabled={callState !== 'idle'}
-            className="p-2.5 rounded-xl text-cafe-500 hover:text-green-600 hover:bg-green-50 transition-colors
+            className="motion-surface p-2 sm:p-2.5 rounded-xl text-cafe-500 hover:text-green-600 hover:bg-green-50 transition-colors
                        disabled:opacity-40 disabled:cursor-not-allowed"
             title="Voice call"
           >
@@ -173,7 +173,7 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
           <button
             onClick={() => startCall('video')}
             disabled={callState !== 'idle'}
-            className="p-2.5 rounded-xl text-cafe-500 hover:text-green-600 hover:bg-green-50 transition-colors
+            className="motion-surface p-2 sm:p-2.5 rounded-xl text-cafe-500 hover:text-green-600 hover:bg-green-50 transition-colors
                        disabled:opacity-40 disabled:cursor-not-allowed"
             title="Video call"
           >
@@ -206,7 +206,7 @@ function DMChat({ friend, onBack, isOnline, friendMood }) {
       <audio ref={remoteAudioRef} autoPlay />
 
       {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 chat-messages">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4 chat-messages">
         {isLoadingHistory ? (
           <div className="flex items-center justify-center h-full">
             <CafeLoader size="small" message="Loading messages..." />

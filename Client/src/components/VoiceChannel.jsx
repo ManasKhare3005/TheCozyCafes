@@ -12,7 +12,7 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
     <div className="shrink-0 bg-white border-t border-cafe-200/50">
       {/* Voice users list — always visible when someone is in voice */}
       {voiceUsers.length > 0 && (
-        <div className="px-4 pt-3 pb-1">
+        <div className="px-3 sm:px-4 pt-3 pb-1">
           <div className="flex items-center gap-1.5 mb-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <span className="text-xs font-semibold text-cafe-600 uppercase tracking-wide">
@@ -20,7 +20,7 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
             </span>
             <span className="text-xs text-cafe-400">({voiceUsers.length})</span>
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto sidebar-scroll pr-1">
             {voiceUsers.map((u) => (
               <div
                 key={u.socketId}
@@ -59,14 +59,14 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
       )}
 
       {/* Controls */}
-      <div className="px-4 py-3 flex items-center gap-2">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 flex flex-wrap items-center gap-2">
         {isInVoice ? (
           <>
             {/* Mute toggle */}
             <button
               type="button"
               onClick={onToggleMute}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`motion-surface flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                 isMuted
                   ? 'bg-red-100 text-red-700 hover:bg-red-200'
                   : 'bg-cafe-100 text-cafe-600 hover:bg-cafe-200'
@@ -92,7 +92,7 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
             <button
               type="button"
               onClick={onLeave}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium
+              className="motion-surface flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium
                          bg-red-600 text-white hover:bg-red-700 transition-colors ml-auto"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +106,7 @@ function VoiceChannel({ voiceUsers, isInVoice, isMuted, onJoin, onLeave, onToggl
           <button
             type="button"
             onClick={onJoin}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium w-full justify-center
+            className="motion-surface flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium w-full justify-center
                        bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -133,7 +133,7 @@ function VoiceNoteButton({ onSend, disabled }) {
 
   if (uploading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 text-cafe-500 text-xs">
+      <div className="flex items-center gap-2 px-3 py-2 text-cafe-500 text-xs shrink-0">
         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -145,7 +145,7 @@ function VoiceNoteButton({ onSend, disabled }) {
 
   if (recording) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
           <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
           <span className="text-red-600 text-sm font-medium font-mono">{formatDuration(duration)}</span>
@@ -153,7 +153,7 @@ function VoiceNoteButton({ onSend, disabled }) {
         <button
           type="button"
           onClick={cancelRecording}
-          className="p-2 rounded-xl text-cafe-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          className="motion-surface p-2 rounded-xl text-cafe-400 hover:text-red-500 hover:bg-red-50 transition-colors"
           title="Cancel"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@ function VoiceNoteButton({ onSend, disabled }) {
         <button
           type="button"
           onClick={stopRecording}
-          className="p-2 rounded-xl bg-cafe-700 text-white hover:bg-cafe-800 transition-colors shadow-warm"
+          className="motion-surface p-2 rounded-xl bg-cafe-700 text-white hover:bg-cafe-800 transition-colors shadow-warm"
           title="Send"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,7 +179,7 @@ function VoiceNoteButton({ onSend, disabled }) {
       type="button"
       onClick={startRecording}
       disabled={disabled}
-      className="p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors
+      className="motion-surface p-3 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors
                  disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
       title="Record voice note"
     >
