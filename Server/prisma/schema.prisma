@@ -477,9 +477,27 @@ model StickyNote {
   // Reported / removed
   isRemoved Boolean @default(false)
 
+  reactions StickyNoteReaction[]
+
   @@index([createdAt])
   @@index([authorId])
   @@map("sticky_notes")
+}
+
+model StickyNoteReaction {
+  id        String   @id @default(cuid())
+  emoji     String   // limited set, e.g. "❤️", "☕"
+  createdAt DateTime @default(now())
+
+  // Author kept only for toggle/uniqueness — never exposed (board stays anonymous)
+  userId String
+
+  noteId String
+  note   StickyNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, noteId, emoji])
+  @@index([noteId])
+  @@map("sticky_note_reactions")
 }
 
 model DrawingState {

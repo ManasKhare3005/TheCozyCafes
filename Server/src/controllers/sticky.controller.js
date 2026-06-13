@@ -1,11 +1,25 @@
 import Groq from 'groq-sdk';
 import prisma from '../lib/prisma.js';
 import { getIo } from '../socket/handlers.js';
+import { createNotification } from './notification.controller.js';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const STICKY_COLORS = ['yellow', 'pink', 'green', 'blue', 'purple', 'orange'];
+const STICKY_REACTIONS = ['❤️', '☕']; // allowed reaction emojis — keep the board calm
 const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Build an anonymous reaction summary for a note: { "❤️": 3, "☕": 1 } and the
+// set of emojis the current user has reacted with (for toggle state).
+function summarizeReactions(reactions, userId) {
+  const counts = {};
+  const mine = [];
+  for (const r of reactions) {
+    counts[r.emoji] = (counts[r.emoji] || 0) + 1;
+    if (r.userId === userId && !mine.includes(r.emoji)) mine.push(r.emoji);
+  }
+  return { counts, mine };
+}
 
 // Groq NSFW content check
 async function isNSFW(text) {
@@ -56,19 +70,25 @@ export async function getStickyNotes(req, res) {
         createdAt: true,
         tags: true,
         authorId: true, // We'll use this to check ownership, but transform below
+        reactions: { select: { emoji: true, userId: true } },
       },
     });
 
     // Transform — include isOwn flag but never expose authorId
-    const notesData = notes.map((note) => ({
-      id: note.id,
-      text: note.text,
-      color: note.color,
-      rotation: note.rotation,
-      createdAt: note.createdAt.toISOString(),
-      tags: note.tags ? note.tags.split(',') : [],
-      isOwn: note.authorId === req.userId,
-    }));
+    const notesData = notes.map((note) => {
+      const { counts, mine } = summarizeReactions(note.reactions, req.userId);
+      return {
+        id: note.id,
+        text: note.text,
+        color: note.color,
+        rotation: note.rotation,
+        createdAt: note.createdAt.toISOString(),
+        tags: note.tags ? note.tags.split(',') : [],
+        isOwn: note.authorId === req.userId,
+        reactions: counts,
+        myReactions: mine,
+      };
+    });
 
     res.json({ notes: notesData });
   } catch (error) {
@@ -80,7 +100,7 @@ export async function getStickyNotes(req, res) {
 // Create a new sticky note
 export async function createStickyNote(req, res) {
   try {
-    const { text } = req.body;
+    const { text, color: requestedColor } = req.body;
 
     if (!text || !text.trim()) {
       return res.status(400).json({ error: 'Note text is required' });
@@ -128,8 +148,10 @@ export async function createStickyNote(req, res) {
     const tagUsernames = extractTags(text);
     const tagsString = tagUsernames.length > 0 ? tagUsernames.join(',') : null;
 
-    // Random color and rotation
-    const color = STICKY_COLORS[Math.floor(Math.random() * STICKY_COLORS.length)];
+    // Color — honor the user's pick if valid, otherwise random. Rotation random.
+    const color = STICKY_COLORS.includes(requestedColor)
+      ? requestedColor
+      : STICKY_COLORS[Math.floor(Math.random() * STICKY_COLORS.length)];
     const rotation = (Math.random() - 0.5) * 12; // -6 to +6 degrees
 
     const note = await prisma.stickyNote.create({
@@ -150,6 +172,8 @@ export async function createStickyNote(req, res) {
       createdAt: note.createdAt.toISOString(),
       tags: tagUsernames,
       isOwn: false, // For other users; the creator will get isOwn=true from their own fetch
+      reactions: {},
+      myReactions: [],
     };
 
     // Broadcast to all connected users
@@ -168,9 +192,17 @@ export async function createStickyNote(req, res) {
         });
 
         for (const tagged of taggedUsers) {
+          // Live in-board toast (only seen if they're viewing the board)
           io.to(`user:${tagged.id}`).emit('sticky:tagged', {
             noteId: note.id,
             noteText: note.text,
+          });
+          // Persisted notification so the mention survives in the bell
+          await createNotification({
+            userId: tagged.id,
+            type: 'mention',
+            title: 'You were mentioned on The Board',
+            body: note.text,
           });
         }
       }
@@ -264,6 +296,53 @@ export async function reportStickyNote(req, res) {
   } catch (error) {
     console.error('Report sticky note error:', error);
     res.status(500).json({ error: 'Failed to report note' });
+  }
+}
+
+// Toggle a reaction (❤️ or ☕) on a note — anonymous, one per emoji per user
+export async function reactStickyNote(req, res) {
+  try {
+    const { noteId } = req.params;
+    const { emoji } = req.body;
+
+    if (!STICKY_REACTIONS.includes(emoji)) {
+      return res.status(400).json({ error: 'Invalid reaction' });
+    }
+
+    const note = await prisma.stickyNote.findUnique({ where: { id: noteId } });
+    if (!note || note.isRemoved) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+
+    // Toggle — remove if it exists, add if it doesn't
+    const existing = await prisma.stickyNoteReaction.findUnique({
+      where: { userId_noteId_emoji: { userId: req.userId, noteId, emoji } },
+    });
+
+    if (existing) {
+      await prisma.stickyNoteReaction.delete({ where: { id: existing.id } });
+    } else {
+      await prisma.stickyNoteReaction.create({
+        data: { emoji, noteId, userId: req.userId },
+      });
+    }
+
+    // Recompute counts and broadcast to everyone
+    const reactions = await prisma.stickyNoteReaction.findMany({
+      where: { noteId },
+      select: { emoji: true, userId: true },
+    });
+    const { counts, mine } = summarizeReactions(reactions, req.userId);
+
+    const io = getIo();
+    if (io) {
+      io.emit('sticky:reaction', { noteId, reactions: counts });
+    }
+
+    res.json({ reactions: counts, myReactions: mine });
+  } catch (error) {
+    console.error('React sticky note error:', error);
+    res.status(500).json({ error: 'Failed to react' });
   }
 }
 

@@ -15,6 +15,12 @@ const COLOR_MAP = {
 
 const STORAGE_KEY = 'sticky-board-positions';
 
+// Allowed reactions — must match the server's STICKY_REACTIONS
+const STICKY_REACTIONS = ['❤️', '☕'];
+
+// Colors a user can pick when posting (plus a "surprise me" random option)
+const COLOR_OPTIONS = ['yellow', 'pink', 'green', 'blue', 'purple', 'orange'];
+
 function loadPositions() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
@@ -55,7 +61,29 @@ function renderNoteText(text) {
   });
 }
 
-function StickyNote({ note, position, onDragEnd, onDelete, onReport, currentUsername }) {
+// Pin/tack decoration — varies by color so the board feels like a real collage.
+// "tape" = a strip of washi tape across the top; "tack" = a round pushpin.
+function PinDecoration({ color }) {
+  const colors = COLOR_MAP[color] || COLOR_MAP.yellow;
+  const variant = ['yellow', 'green', 'blue'].includes(color) ? 'tape' : 'tack';
+
+  if (variant === 'tape') {
+    return (
+      <div
+        className={`absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-5 ${colors.pin} opacity-60 rotate-[-4deg]
+                    shadow-sm z-10`}
+        style={{ clipPath: 'polygon(4% 0, 96% 0, 100% 100%, 0 100%)' }}
+      />
+    );
+  }
+  return (
+    <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full ${colors.pin} border-2 border-white shadow-md z-10`}>
+      <span className="absolute top-0.5 left-0.5 w-1 h-1 rounded-full bg-white/70" />
+    </div>
+  );
+}
+
+function StickyNote({ note, position, onDragEnd, onDelete, onReport, onReact, currentUsername, isFresh }) {
   const colors = COLOR_MAP[note.color] || COLOR_MAP.yellow;
   const [dragging, setDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -84,7 +112,7 @@ function StickyNote({ note, position, onDragEnd, onDelete, onReport, currentUser
   }, [showMenu]);
 
   const handleMouseDown = (e) => {
-    if (e.target.closest('[data-menu]')) return;
+    if (e.target.closest('[data-menu]') || e.target.closest('[data-react]')) return;
     e.preventDefault();
     const rect = noteRef.current.getBoundingClientRect();
     setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
@@ -125,7 +153,7 @@ function StickyNote({ note, position, onDragEnd, onDelete, onReport, currentUser
 
   // Touch support
   const handleTouchStart = (e) => {
-    if (e.target.closest('[data-menu]')) return;
+    if (e.target.closest('[data-menu]') || e.target.closest('[data-react]')) return;
     const touch = e.touches[0];
     const rect = noteRef.current.getBoundingClientRect();
     setDragOffset({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
@@ -180,18 +208,19 @@ function StickyNote({ note, position, onDragEnd, onDelete, onReport, currentUser
   return (
     <div
       ref={noteRef}
-      className={`absolute w-40 select-none ${dragging ? 'z-50 scale-105' : 'z-10 hover:z-20'} transition-transform`}
+      className={`absolute w-40 select-none ${dragging ? 'z-50 scale-105' : 'z-10 hover:z-20'} transition-transform ${isFresh && !dragging ? 'animate-note-drop' : ''}`}
       style={{
         left: `${pos.x}px`,
         top: `${pos.y}px`,
         transform: `rotate(${note.rotation}deg)`,
+        '--note-rot': `${note.rotation}deg`,
         cursor: dragging ? 'grabbing' : 'grab',
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
     >
-      {/* Pin */}
-      <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full ${colors.pin} border-2 border-white shadow-md z-10`} />
+      {/* Pin / tape */}
+      <PinDecoration color={note.color} />
 
       {/* Note body */}
       <div
@@ -208,6 +237,33 @@ function StickyNote({ note, position, onDragEnd, onDelete, onReport, currentUser
         <p className="text-[15px] leading-snug font-medium break-words">
           {renderNoteText(note.text)}
         </p>
+
+        {/* Reactions */}
+        <div data-react className="flex items-center gap-1 mt-2">
+          {STICKY_REACTIONS.map((emoji) => {
+            const count = note.reactions?.[emoji] || 0;
+            const active = note.myReactions?.includes(emoji);
+            return (
+              <button
+                key={emoji}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReact(note.id, emoji);
+                }}
+                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] leading-none
+                            border transition-colors ${
+                  active
+                    ? 'bg-white/70 border-white/80 shadow-sm'
+                    : 'bg-white/20 border-transparent hover:bg-white/40'
+                }`}
+                title={active ? 'Remove reaction' : 'React'}
+              >
+                <span>{emoji}</span>
+                {count > 0 && <span className="font-semibold opacity-70">{count}</span>}
+              </button>
+            );
+          })}
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between mt-2 pt-1">
@@ -264,12 +320,18 @@ function StickyNote({ note, position, onDragEnd, onDelete, onReport, currentUser
 
 function PostNoteForm({ onPost, canPost, cooldownRemaining, friends = [] }) {
   const [text, setText] = useState('');
+  const [color, setColor] = useState(null); // null = surprise me (random)
+  const [showPreview, setShowPreview] = useState(false);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(cooldownRemaining);
   const [mentionQuery, setMentionQuery] = useState(null); // null = not mentioning, string = search query
   const [mentionIndex, setMentionIndex] = useState(0);
   const inputRef = useRef(null);
+
+  // A stable preview color/tilt so the draft doesn't reshuffle on each keystroke
+  const previewColor = color || 'yellow';
+  const previewColors = COLOR_MAP[previewColor] || COLOR_MAP.yellow;
 
   // Countdown timer
   useEffect(() => {
@@ -362,18 +424,29 @@ function PostNoteForm({ onPost, canPost, cooldownRemaining, friends = [] }) {
     }
   };
 
-  const handleSubmit = async (e) => {
+  // Step 1 → step 2: move from composing to the draft preview (no cooldown spent yet)
+  const goToPreview = (e) => {
     e.preventDefault();
-    if (mentionQuery !== null && mentionSuggestions.length > 0) return; // Don't submit while picking mention
+    if (mentionQuery !== null && mentionSuggestions.length > 0) return; // Don't advance while picking mention
+    if (!text.trim() || wordCount > 10) return;
+    setError('');
+    setShowPreview(true);
+  };
+
+  // Step 2: actually pin the note — this is what spends the one-a-day cooldown
+  const handleCommit = async () => {
     if (!text.trim() || wordCount > 10) return;
     setError('');
     setPosting(true);
     try {
-      await onPost(text.trim());
+      await onPost(text.trim(), color);
       setText('');
+      setColor(null);
+      setShowPreview(false);
       setMentionQuery(null);
     } catch (err) {
       setError(err.message);
+      setShowPreview(false); // back to edit so they can fix it
     } finally {
       setPosting(false);
     }
@@ -388,9 +461,55 @@ function PostNoteForm({ onPost, canPost, cooldownRemaining, friends = [] }) {
     );
   }
 
+  // Step 2 — draft preview before committing the one daily note
+  if (showPreview) {
+    return (
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-cafe-200/50 px-4 py-3 shadow-warm">
+        {error && <p className="text-red-600 text-xs mb-2">{error}</p>}
+        <p className="text-xs text-cafe-500 mb-2 text-center">Here's how your note will look:</p>
+
+        {/* Preview note */}
+        <div className="flex justify-center py-2">
+          <div className="relative w-40" style={{ transform: 'rotate(-3deg)' }}>
+            <PinDecoration color={previewColor} />
+            <div
+              className={`${previewColors.bg} ${previewColors.border} ${previewColors.text} border rounded-sm p-3 pt-4 shadow-lg ${previewColors.shadow} min-h-[80px]`}
+              style={{ fontFamily: "'Caveat', 'Patrick Hand', cursive, sans-serif" }}
+            >
+              <p className="text-[15px] leading-snug font-medium break-words">{renderNoteText(text.trim())}</p>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-[10px] text-amber-700 text-center mt-1 mb-3">
+          ⚠️ This uses your one note for today.
+        </p>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => { setShowPreview(false); setError(''); }}
+            disabled={posting}
+            className="flex-1 bg-cafe-100 hover:bg-cafe-200 text-cafe-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={handleCommit}
+            disabled={posting}
+            className="flex-1 bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-300 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors shadow-warm"
+          >
+            {posting ? 'Pinning...' : 'Pin it for real'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={goToPreview}
       className="bg-white/90 backdrop-blur-sm rounded-2xl border border-cafe-200/50 px-4 py-3 shadow-warm relative"
     >
       {error && <p className="text-red-600 text-xs mb-2">{error}</p>}
@@ -436,13 +555,41 @@ function PostNoteForm({ onPost, canPost, cooldownRemaining, friends = [] }) {
         />
         <button
           type="submit"
-          disabled={posting || !text.trim() || wordCount > 10}
+          disabled={!text.trim() || wordCount > 10}
           className="bg-cafe-700 hover:bg-cafe-800 disabled:bg-cafe-300 text-white text-sm font-medium
                      px-4 py-2 rounded-xl transition-colors shadow-warm shrink-0"
         >
-          {posting ? '...' : 'Pin it'}
+          Preview
         </button>
       </div>
+
+      {/* Color picker */}
+      <div className="flex items-center gap-1.5 mt-2">
+        <span className="text-[10px] text-cafe-400 mr-0.5">Color:</span>
+        {COLOR_OPTIONS.map((c) => {
+          const cm = COLOR_MAP[c];
+          return (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setColor(c)}
+              title={c}
+              className={`w-5 h-5 rounded-full ${cm.pin} border transition-transform ${
+                color === c ? 'ring-2 ring-cafe-600 ring-offset-1 scale-110' : 'border-white/60 hover:scale-110'
+              }`}
+            />
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setColor(null)}
+          title="Surprise me"
+          className={`w-5 h-5 rounded-full bg-gradient-to-br from-yellow-300 via-pink-300 to-purple-300 border transition-transform ${
+            color === null ? 'ring-2 ring-cafe-600 ring-offset-1 scale-110' : 'border-white/60 hover:scale-110'
+          }`}
+        />
+      </div>
+
       <div className="flex items-center justify-between mt-1.5">
         <p className="text-[10px] text-cafe-400">
           Use @username to tag someone
@@ -463,6 +610,8 @@ function StickyBoard({ onClose, friends = [] }) {
   const [canPost, setCanPost] = useState(true);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [tagNotification, setTagNotification] = useState(null);
+  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'mine' | 'tagged' | a color
+  const [freshIds, setFreshIds] = useState(() => new Set()); // notes that just dropped in (for animation)
   const boardRef = useRef(null);
 
   // Fetch notes and cooldown
@@ -508,6 +657,15 @@ function StickyBoard({ onClose, friends = [] }) {
         if (prev.some((n) => n.id === note.id)) return prev;
         return [...prev, note];
       });
+      // Flag for the drop-in animation, then clear so it only plays once
+      setFreshIds((prev) => new Set(prev).add(note.id));
+      setTimeout(() => {
+        setFreshIds((prev) => {
+          const next = new Set(prev);
+          next.delete(note.id);
+          return next;
+        });
+      }, 600);
     };
 
     const handleRemoved = ({ noteId }) => {
@@ -519,14 +677,22 @@ function StickyBoard({ onClose, friends = [] }) {
       setTimeout(() => setTagNotification(null), 5000);
     };
 
+    const handleReaction = ({ noteId, reactions }) => {
+      setNotes((prev) =>
+        prev.map((n) => (n.id === noteId ? { ...n, reactions } : n))
+      );
+    };
+
     socket.on('sticky:new', handleNew);
     socket.on('sticky:removed', handleRemoved);
     socket.on('sticky:tagged', handleTagged);
+    socket.on('sticky:reaction', handleReaction);
 
     return () => {
       socket.off('sticky:new', handleNew);
       socket.off('sticky:removed', handleRemoved);
       socket.off('sticky:tagged', handleTagged);
+      socket.off('sticky:reaction', handleReaction);
     };
   }, []);
 
@@ -539,18 +705,28 @@ function StickyBoard({ onClose, friends = [] }) {
   }, []);
 
   const handlePost = useCallback(
-    async (text) => {
+    async (text, color) => {
       const res = await fetch(`${API_URL}/sticky`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, color }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
+      // Show our own note immediately. The socket broadcast carries isOwn:false,
+      // so upsert to guarantee our copy (with isOwn:true) wins regardless of order.
+      if (data.note) {
+        setNotes((prev) =>
+          prev.some((n) => n.id === data.note.id)
+            ? prev.map((n) => (n.id === data.note.id ? data.note : n))
+            : [...prev, data.note]
+        );
+      }
 
       // Set cooldown
       setCanPost(false);
@@ -558,6 +734,62 @@ function StickyBoard({ onClose, friends = [] }) {
     },
     [token]
   );
+
+  const handleReact = useCallback(
+    async (noteId, emoji) => {
+      // Optimistic toggle — flip count and my-reaction state right away
+      setNotes((prev) =>
+        prev.map((n) => {
+          if (n.id !== noteId) return n;
+          const mine = n.myReactions || [];
+          const has = mine.includes(emoji);
+          const counts = { ...(n.reactions || {}) };
+          counts[emoji] = Math.max(0, (counts[emoji] || 0) + (has ? -1 : 1));
+          if (counts[emoji] === 0) delete counts[emoji];
+          return {
+            ...n,
+            reactions: counts,
+            myReactions: has ? mine.filter((e) => e !== emoji) : [...mine, emoji],
+          };
+        })
+      );
+
+      try {
+        const res = await fetch(`${API_URL}/sticky/${noteId}/react`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ emoji }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Reconcile with the server's authoritative counts
+          setNotes((prev) =>
+            prev.map((n) =>
+              n.id === noteId ? { ...n, reactions: data.reactions, myReactions: data.myReactions } : n
+            )
+          );
+        }
+      } catch (err) {
+        console.error('Failed to react:', err);
+      }
+    },
+    [token]
+  );
+
+  // Re-grid every note into a tidy layout and persist it
+  const handleTidy = useCallback(() => {
+    const board = boardRef.current;
+    const w = board?.clientWidth || 800;
+    const h = board?.clientHeight || 600;
+    setPositions(() => {
+      const next = {};
+      notes.forEach((note, index) => {
+        next[note.id] = defaultPosition(index, w, h);
+      });
+      savePositions(next);
+      return next;
+    });
+  }, [notes]);
 
   const handleDelete = useCallback(
     async (noteId) => {
@@ -599,6 +831,24 @@ function StickyBoard({ onClose, friends = [] }) {
     return defaultPosition(index, w, h);
   };
 
+  const myUsername = user?.username?.toLowerCase();
+  const hasOwnNote = notes.some((n) => n.isOwn);
+
+  // Does a note pass the current filter? (kept as a predicate so map indices,
+  // and therefore default positions, stay stable.)
+  const noteMatchesFilter = (note) => {
+    if (filterMode === 'all') return true;
+    if (filterMode === 'mine') return note.isOwn;
+    if (filterMode === 'tagged') return note.tags?.some((t) => t.toLowerCase() === myUsername);
+    return note.color === filterMode; // a specific color
+  };
+
+  const FILTER_TABS = [
+    { value: 'all', label: 'All' },
+    { value: 'mine', label: 'Mine' },
+    { value: 'tagged', label: 'Tagged me' },
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-amber-50">
       {/* Header */}
@@ -610,15 +860,64 @@ function StickyBoard({ onClose, friends = [] }) {
             <p className="text-xs text-cafe-400">Pin anonymous notes — 10 words, once a day</p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Your-note indicator */}
+          <span
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+              hasOwnNote ? 'bg-emerald-100 text-emerald-700' : 'bg-cafe-100 text-cafe-500'
+            }`}
+            title={hasOwnNote ? 'Your note is on the board today' : "You haven't pinned a note today"}
+          >
+            {hasOwnNote ? '✓ Your note is up' : 'No note yet today'}
+          </span>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-cafe-400 hover:text-cafe-700 hover:bg-cafe-100 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </header>
+
+      {/* Toolbar — filters + tidy */}
+      <div className="bg-white/70 border-b border-cafe-200/40 px-6 py-2 flex items-center justify-between gap-3 shrink-0 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setFilterMode(tab.value)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                filterMode === tab.value
+                  ? 'bg-cafe-700 text-white'
+                  : 'bg-cafe-100 text-cafe-600 hover:bg-cafe-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+          {/* Color filter swatches */}
+          <span className="w-px h-4 bg-cafe-200 mx-1" />
+          {COLOR_OPTIONS.map((c) => (
+            <button
+              key={c}
+              onClick={() => setFilterMode((m) => (m === c ? 'all' : c))}
+              title={`Show ${c} notes`}
+              className={`w-5 h-5 rounded-full ${COLOR_MAP[c].pin} border transition-transform ${
+                filterMode === c ? 'ring-2 ring-cafe-600 ring-offset-1 scale-110' : 'border-white/60 hover:scale-110'
+              }`}
+            />
+          ))}
+        </div>
+        <button
+          onClick={handleTidy}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-cafe-100 text-cafe-600 hover:bg-cafe-200 transition-colors"
+          title="Auto-arrange notes into a tidy grid"
+        >
+          🧹 Tidy up
+        </button>
+      </div>
 
       {/* Tag notification */}
       {tagNotification && (
@@ -630,40 +929,53 @@ function StickyBoard({ onClose, friends = [] }) {
       )}
 
       {/* Board */}
-      <div
-        ref={boardRef}
-        className="flex-1 relative overflow-auto"
-        style={{
-          backgroundImage: `
-            radial-gradient(circle, rgba(139,90,43,0.08) 1px, transparent 1px)
-          `,
-          backgroundSize: '24px 24px',
-        }}
-      >
+      <div ref={boardRef} className="flex-1 relative overflow-auto cork-board">
+        {/* Brand watermark behind the notes */}
+        <div className="board-watermark">
+          <span>The Cozy Cafes</span>
+        </div>
+
         {loading ? (
-          <div className="flex items-center justify-center h-full text-cafe-400">
+          <div className="relative z-10 flex items-center justify-center h-full text-cafe-800/70">
             Loading the board...
           </div>
         ) : notes.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="relative z-10 flex items-center justify-center h-full">
             <div className="text-center">
               <span className="text-6xl block mb-4">📌</span>
-              <p className="font-serif text-xl text-cafe-600">The board is empty</p>
-              <p className="text-cafe-400 text-sm mt-1">Be the first to pin a note!</p>
+              <p className="font-serif text-xl text-cafe-900">The board is empty</p>
+              <p className="text-cafe-800/60 text-sm mt-1">Be the first to pin a note!</p>
+            </div>
+          </div>
+        ) : !notes.some(noteMatchesFilter) ? (
+          <div className="relative z-10 flex items-center justify-center h-full">
+            <div className="text-center">
+              <span className="text-5xl block mb-3">🔍</span>
+              <p className="font-serif text-lg text-cafe-900">No notes match this filter</p>
+              <button
+                onClick={() => setFilterMode('all')}
+                className="text-cafe-800/70 text-sm mt-1 underline hover:text-cafe-900"
+              >
+                Show all notes
+              </button>
             </div>
           </div>
         ) : (
-          notes.map((note, index) => (
-            <StickyNote
-              key={note.id}
-              note={note}
-              position={getPosition(note.id, index)}
-              onDragEnd={handleDragEnd}
-              onDelete={handleDelete}
-              onReport={handleReport}
-              currentUsername={user?.username}
-            />
-          ))
+          notes.map((note, index) =>
+            noteMatchesFilter(note) ? (
+              <StickyNote
+                key={note.id}
+                note={note}
+                position={getPosition(note.id, index)}
+                onDragEnd={handleDragEnd}
+                onDelete={handleDelete}
+                onReport={handleReport}
+                onReact={handleReact}
+                currentUsername={user?.username}
+                isFresh={freshIds.has(note.id)}
+              />
+            ) : null
+          )
         )}
       </div>
 
